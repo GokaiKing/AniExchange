@@ -19,7 +19,7 @@ export type GiverView = {
     platform: Platform;
     profileUrl: string;
     profileUsername: string;
-    maxEpisodes: number;
+    maxEpisodes: number | null;
     bannedTags: string[];
     allowedTags: string[];
     allowPtw: boolean;

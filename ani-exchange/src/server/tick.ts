@@ -29,14 +29,24 @@ import {
   processNotificationBatch,
   skipAssignmentDms,
 } from "./notifications";
+import { applyProposalsOnMiss, applySelectionOnMiss, type OnMissSummary } from "./on-miss";
 import { PHASE_LABEL } from "./phases";
+import { type AnimeServices, defaultAnimeServices } from "./anime-services";
 
 export type TickAction =
   | { type: "phase.open"; eventId: string; phase: PhaseKey }
   | { type: "phase.close"; eventId: string; phase: PhaseKey }
   | { type: "phase.waiting_manual"; eventId: string; phase: PhaseKey }
   | { type: "draw.execute"; eventId: string; participants: number }
-  | { type: "draw.insufficient"; eventId: string; participants: number };
+  | { type: "draw.insufficient"; eventId: string; participants: number }
+  | {
+      type: "on_miss";
+      eventId: string;
+      phase: PhaseKey;
+      policy: string;
+      affected: number;
+      needsAttention: number;
+    };
 
 export class FlowError extends Error {}
 
@@ -129,11 +139,21 @@ async function runCloseAction(
   actorId: string | null,
   now: Date,
   actions: TickAction[],
+  services: AnimeServices,
 ): Promise<boolean> {
+  const record = (summary: OnMissSummary) => {
+    if (summary.affected > 0) {
+      actions.push({ type: "on_miss", eventId: event.id, phase: phase.key, ...summary });
+    }
+    return true;
+  };
   switch (phase.key) {
     case "registration":
       return executeDraw(tx, event, actorId, now, actions);
-    // TODO(hito 6): aplicar on_miss de proposals / selection.
+    case "proposals":
+      return record(await applyProposalsOnMiss(tx, event, phase, services));
+    case "selection":
+      return record(await applySelectionOnMiss(tx, event, phase));
     default:
       return true;
   }
@@ -146,8 +166,9 @@ async function closePhase(
   actorId: string | null,
   now: Date,
   actions: TickAction[],
+  services: AnimeServices,
 ): Promise<boolean> {
-  if (!(await runCloseAction(tx, event, phase, actorId, now, actions))) return false;
+  if (!(await runCloseAction(tx, event, phase, actorId, now, actions, services))) return false;
   await tx
     .update(eventPhases)
     .set({ status: "closed", executedAt: now })
@@ -188,6 +209,7 @@ async function advance(
   phases: PhaseRow[],
   now: Date,
   actions: TickAction[],
+  services: AnimeServices,
 ): Promise<void> {
   for (const phase of phases) {
     if (event.paused || event.archived) return;
@@ -203,7 +225,7 @@ async function advance(
       actions.push({ type: "phase.waiting_manual", eventId: event.id, phase: phase.key });
       return;
     }
-    if (!(await closePhase(tx, event, phase, null, now, actions))) return;
+    if (!(await closePhase(tx, event, phase, null, now, actions, services))) return;
   }
 }
 
@@ -223,7 +245,11 @@ async function lockEvent(tx: Transaction, eventId: string) {
 // API pública
 // ---------------------------------------------------------------------------
 
-export async function runDueActions(db: Database, now: Date = new Date()): Promise<TickAction[]> {
+export async function runDueActions(
+  db: Database,
+  now: Date = new Date(),
+  services: AnimeServices = defaultAnimeServices,
+): Promise<TickAction[]> {
   const candidates = await db
     .select({ id: events.id })
     .from(events)
@@ -234,7 +260,7 @@ export async function runDueActions(db: Database, now: Date = new Date()): Promi
     await db.transaction(async (tx) => {
       const locked = await lockEvent(tx, id);
       if (!locked) return;
-      await advance(tx, locked.event, locked.phases, now, actions);
+      await advance(tx, locked.event, locked.phases, now, actions, services);
     });
   }
   return actions;
@@ -252,10 +278,10 @@ export type TickResult = {
  */
 export async function runTick(
   db: Database,
-  options: { dm: DmProcessingOptions | null },
+  options: { dm: DmProcessingOptions | null; services?: AnimeServices },
   now: Date = new Date(),
 ): Promise<TickResult> {
-  const actions = await runDueActions(db, now);
+  const actions = await runDueActions(db, now, options.services);
   const remindersEnqueued = await enqueueReminders(db, now);
   const dms = options.dm ? await processNotificationBatch(db, options.dm, now) : null;
   return { actions, remindersEnqueued, dms };
@@ -306,6 +332,7 @@ export async function closePhaseNow(
   eventId: string,
   key: PhaseKey,
   now: Date = new Date(),
+  services: AnimeServices = defaultAnimeServices,
 ): Promise<TickAction[]> {
   return db.transaction(async (tx) => {
     const locked = await lockEvent(tx, eventId);
@@ -334,8 +361,8 @@ export async function closePhaseNow(
       entityId: current.id,
       after: { eventId, phase: current.key, scheduledEnd: current.endsAt },
     });
-    const closed = await closePhase(tx, event, current, actorId, now, actions);
-    if (closed) await advance(tx, event, phases, now, actions);
+    const closed = await closePhase(tx, event, current, actorId, now, actions, services);
+    if (closed) await advance(tx, event, phases, now, actions, services);
     return actions;
   });
 }

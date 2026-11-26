@@ -175,7 +175,8 @@ export const participants = pgTable(
     platform: platform("platform").notNull(),
     profileUrl: text("profile_url").notNull(),
     profileUsername: text("profile_username").notNull(),
-    maxEpisodes: integer("max_episodes").notNull(),
+    /** Tope de episodios (13 = 1 cour, 26 = 2 cours); null = indefinido. */
+    maxEpisodes: integer("max_episodes"),
     bannedTags: text("banned_tags").array().notNull(),
     allowedTags: text("allowed_tags").array().notNull(),
     allowPtw: boolean("allow_ptw").notNull().default(true),
@@ -239,6 +240,12 @@ export const proposals = pgTable(
     coverUrl: text("cover_url"),
     chosen: boolean("chosen").notNull().default(false),
     autoChosen: boolean("auto_chosen").notNull().default(false),
+    /** La agregó el sistema (política on_miss random_from_ptw), no el giver. */
+    autoAdded: boolean("auto_added").notNull().default(false),
+    /** Avisos no bloqueantes al proponer (ya lo vio, está en su PTW, tag poco relevante…). */
+    warnings: text("warnings").array().notNull().default(sql`'{}'`),
+    /** El receptor marcó preferidos y este anime no tiene ninguno (aviso, no bloquea). */
+    missesPreferred: boolean("misses_preferred").notNull().default(false),
     createdAt: createdAt(),
   },
   // Máx. 3 por asignación: se valida en la capa de app dentro de transacción.

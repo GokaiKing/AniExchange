@@ -7,8 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getDb } from "@/db";
 import { requireUser } from "@/lib/authz";
 import { PLATFORM_LABEL } from "@/lib/profiles";
+import { episodeLimitLabel } from "@/lib/registration";
 import { getMyAssignmentView, type GiverView, type ReceiverView } from "@/server/assignment-views";
+import { getCurrentEvent } from "@/server/participants";
+import { isPhaseActive } from "@/server/phases";
+import { MAX_PROPOSALS } from "@/server/proposal-rules";
+import { listGiverProposals, listReceiverProposals } from "@/server/proposals";
 import { ensureTicked } from "@/server/tick";
+import { ProposalChooser } from "./proposal-chooser";
+import { ProposalEditor } from "./proposal-editor";
 
 function ptwUrl(receiver: GiverView["receiver"]): string {
   return receiver.platform === "anilist"
@@ -29,7 +36,7 @@ function TagList({ tags, variant }: { tags: string[]; variant: "secondary" | "de
   );
 }
 
-function GiverCard({ view }: { view: GiverView }) {
+function GiverCard({ view, children }: { view: GiverView; children: React.ReactNode }) {
   const { receiver } = view;
   return (
     <Card className="border-t-4 border-t-festive-green">
@@ -59,7 +66,7 @@ function GiverCard({ view }: { view: GiverView }) {
           )}
         </p>
         <p>
-          Límite: <strong>{receiver.maxEpisodes} episodios</strong>
+          Límite: <strong>{episodeLimitLabel(receiver.maxEpisodes)}</strong>
         </p>
         <p className="flex flex-wrap items-center gap-2">
           Preferidos: <TagList tags={receiver.allowedTags} variant="secondary" />
@@ -77,16 +84,17 @@ function GiverCard({ view }: { view: GiverView }) {
             Propón hasta 3 opciones antes del <AppDateTime date={view.proposalsDeadline} />.
           </p>
         )}
-        <p className="rounded-md border border-dashed px-3 py-2 text-muted-foreground">
-          Muy pronto podrás proponer aquí mismo.
-        </p>
+        <div className="border-t pt-3">
+          <p className="mb-2 font-medium">Tus propuestas</p>
+          {children}
+        </div>
         <p className="text-xs text-muted-foreground">🤫 Es secreto: no le digas a nadie a quién te tocó.</p>
       </CardContent>
     </Card>
   );
 }
 
-function ReceiverCard({ view }: { view: ReceiverView }) {
+function ReceiverCard({ view, children }: { view: ReceiverView; children?: React.ReactNode }) {
   return (
     <Card className="border-t-4 border-t-festive-red">
       <CardHeader>
@@ -106,6 +114,7 @@ function ReceiverCard({ view }: { view: ReceiverView }) {
             Elegirás una antes del <AppDateTime date={view.selectionDeadline} />.
           </p>
         )}
+        {children}
       </CardContent>
     </Card>
   );
@@ -116,6 +125,22 @@ async function AssignmentContent() {
   const db = getDb();
   await ensureTicked(db);
   const view = await getMyAssignmentView(db, user.id);
+  const now = new Date();
+  const current = await getCurrentEvent(db);
+  const phase = (key: "proposals" | "selection") => current?.phases.find((p) => p.key === key);
+  const active = (key: "proposals" | "selection") => {
+    const p = phase(key);
+    return Boolean(current && p && isPhaseActive(p, current.event, now));
+  };
+  const selection = phase("selection");
+  const selectionStarted = Boolean(selection && (selection.status !== "pending" || selection.startsAt <= now));
+
+  const giverProposals =
+    view.state === "drawn" && view.asGiver ? await listGiverProposals(db, view.asGiver.assignmentId) : [];
+  const receiverProposals =
+    view.state === "drawn" && view.asReceiver && selectionStarted
+      ? await listReceiverProposals(db, view.asReceiver.assignmentId)
+      : [];
 
   if (view.state === "no_event") {
     return <p className="text-muted-foreground">No hay un intercambio en curso.</p>;
@@ -156,11 +181,25 @@ async function AssignmentContent() {
       {view.state === "drawn" && (
         <>
           {view.asGiver ? (
-            <GiverCard view={view.asGiver} />
+            <GiverCard view={view.asGiver}>
+              <ProposalEditor
+                proposals={giverProposals}
+                preferredTags={view.asGiver.receiver.allowedTags}
+                max={MAX_PROPOSALS}
+                editable={active("proposals")}
+                showChosen={selection?.status === "closed"}
+              />
+            </GiverCard>
           ) : (
             <p className="text-muted-foreground">No tienes asignación como giver en esta edición.</p>
           )}
-          {view.asReceiver && <ReceiverCard view={view.asReceiver} />}
+          {view.asReceiver && (
+            <ReceiverCard view={view.asReceiver}>
+              {receiverProposals.length > 0 && (
+                <ProposalChooser proposals={receiverProposals} editable={active("selection")} />
+              )}
+            </ReceiverCard>
+          )}
         </>
       )}
     </div>

@@ -7,7 +7,7 @@ const base = {
   receiverName: "Goku_Fan",
   allowedTags: ["Action", "Isekai"],
   bannedTags: [],
-  maxEpisodes: 24,
+  maxEpisodes: 26 as number | null,
   allowPtw: true,
   deadline: dayEndUtc("2026-12-15"),
   link: "https://ejemplo.test/assignment",
@@ -20,7 +20,8 @@ describe("assignmentMessage", () => {
     expect(text).toContain("Te tocó darle un anime a **Goku\\_Fan**");
     expect(text).toContain("Géneros/tags preferidos: Action, Isekai");
     expect(text).toContain("No permitidos: ninguno");
-    expect(text).toContain("Límite: 24 episodios");
+    expect(text).toContain("Límite: 2 cours (hasta 26 episodios)");
+    expect(assignmentMessage({ ...base, maxEpisodes: null })).toContain("Límite: Indefinido (sin límite)");
     expect(text).toContain("https://ejemplo.test/assignment");
     expect(text).toContain("15 dic, 23:59 (horario del vendehumo del admin)");
     expect(text).toMatch(/<t:\d+:f>/);

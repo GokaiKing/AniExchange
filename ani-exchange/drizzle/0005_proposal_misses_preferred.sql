@@ -1,0 +1,1 @@
+ALTER TABLE "proposals" ADD COLUMN "misses_preferred" boolean DEFAULT false NOT NULL;

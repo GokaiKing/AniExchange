@@ -21,10 +21,12 @@ import { writeAudit } from "@/lib/audit";
 import { dueReminderDay } from "@/lib/dates";
 import type { DmSender } from "@/lib/discord";
 import { MIN_PARTICIPANTS } from "./draw";
+import { PHASE_LABEL } from "./phases";
 import {
   assignmentMessage,
   drawInsufficientMessage,
   hasReminderText,
+  onMissAlertMessage,
   reminderMessage,
 } from "./messages";
 
@@ -38,6 +40,7 @@ export type NotificationRow = typeof notificationLog.$inferSelect;
 export type AssignmentPayload = { assignmentId: string; redraw?: boolean };
 export type ReminderPayload = { phaseId: string; phase: PhaseKey; days: number };
 export type DrawInsufficientPayload = { participants: number };
+export type OnMissAlertPayload = { type: "on_miss"; phase: PhaseKey; policy: string; count: number };
 
 // ---------------------------------------------------------------------------
 // Encolar
@@ -242,6 +245,17 @@ async function render(tx: Transaction, row: NotificationRow, appBaseUrl: string)
     const [current] = await tx.select().from(eventPhases).where(eq(eventPhases.id, phaseId));
     if (!current || current.status !== "open") return null;
     return reminderMessage({ eventName, phase, deadline: current.endsAt, link: myAssignment });
+  }
+
+  if (row.kind === "admin_alert" && (row.payload as { type?: string }).type === "on_miss") {
+    const { phase, policy, count: n } = row.payload as OnMissAlertPayload;
+    return onMissAlertMessage({
+      eventName,
+      phaseLabel: PHASE_LABEL[phase],
+      policy,
+      count: n,
+      link: `${appBaseUrl}/admin/events/${row.eventId}`,
+    });
   }
 
   if (row.kind === "admin_alert") {

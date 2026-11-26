@@ -9,10 +9,8 @@ import { isPhaseActive } from "./phases";
 export type ParticipantRow = typeof participants.$inferSelect;
 
 export {
-  EPISODE_PRESETS,
   MAX_ALLOWED_TAGS,
   MAX_BANNED_TAGS,
-  MAX_EPISODES_LIMIT,
   type RegistrationInput,
   registrationSchema,
 } from "@/lib/registration";

@@ -22,6 +22,27 @@
       "when": 1795667459641,
       "tag": "0002_notification_payload",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795668234094,
+      "tag": "0003_proposal_warnings",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795668399203,
+      "tag": "0004_episode_limit_cours",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795669082904,
+      "tag": "0005_proposal_misses_preferred",
+      "breakpoints": true
     }
   ]
 }

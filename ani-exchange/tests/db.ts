@@ -63,7 +63,7 @@ export async function addParticipants(
         platform: "anilist",
         profileUrl: `https://anilist.co/user/p${i}/`,
         profileUsername: `p${i}`,
-        maxEpisodes: 24,
+        maxEpisodes: 26,
         bannedTags: [],
         allowedTags: [],
         status,

@@ -8,6 +8,7 @@ import type { TagOption } from "@/lib/anilist";
 import { requireUser } from "@/lib/authz";
 import { AppDateTime } from "@/components/app-date-time";
 import { PLATFORM_LABEL } from "@/lib/profiles";
+import { nearestEpisodeLimit } from "@/lib/registration";
 import { getEventWithPhases } from "@/server/events";
 import { getRegistration, registrationPhaseOf } from "@/server/participants";
 import { isPhaseActive } from "@/server/phases";
@@ -109,7 +110,7 @@ async function RegisterContent({ params }: { params: PageProps<"/events/[id]/reg
                   ? {
                       platform: registration.platform,
                       profile: registration.profileUrl,
-                      maxEpisodes: registration.maxEpisodes,
+                      maxEpisodes: nearestEpisodeLimit(registration.maxEpisodes),
                       bannedTags: registration.bannedTags,
                       allowedTags: registration.allowedTags,
                       allowPtw: registration.allowPtw,

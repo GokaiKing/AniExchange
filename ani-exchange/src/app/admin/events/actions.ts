@@ -16,6 +16,7 @@ import {
 } from "@/server/events";
 import {
   hasOnMiss,
+  ON_MISS_LABEL,
   PHASE_LABEL,
   PHASE_ORDER,
   type PhaseError,
@@ -193,6 +194,8 @@ function describeActions(actions: TickAction[]): string {
           return `Sorteo ejecutado (${a.participants} participantes)`;
         case "draw.insufficient":
           return `Sorteo no ejecutado: solo ${a.participants} participantes; edición pausada`;
+        case "on_miss":
+          return `${PHASE_LABEL[a.phase]}: ${a.affected} no cumplieron (${ON_MISS_LABEL[a.policy] ?? a.policy})${a.needsAttention ? `, ${a.needsAttention} requieren atención` : ""}`;
       }
     })
     .join(" · ");

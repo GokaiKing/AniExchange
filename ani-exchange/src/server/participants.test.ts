@@ -20,7 +20,7 @@ const validTags = new Set(["Action", "Romance", "Isekai", "Horror", "Mecha"]);
 const input: RegistrationInput = {
   platform: "anilist",
   profile: "https://anilist.co/user/gokufan",
-  maxEpisodes: 24,
+  maxEpisodes: 26,
   bannedTags: ["Horror"],
   allowedTags: ["Action", "Isekai"],
   allowPtw: true,
@@ -42,8 +42,11 @@ describe("registrationSchema", () => {
   it("rechaza límites y combinaciones inválidas", () => {
     const bad = (patch: Partial<RegistrationInput>) =>
       registrationSchema.safeParse({ ...input, ...patch }).success;
-    expect(bad({ maxEpisodes: 0 })).toBe(false);
-    expect(bad({ maxEpisodes: 12.5 })).toBe(false);
+    expect(bad({ maxEpisodes: 12 as never })).toBe(false);
+    expect(bad({ maxEpisodes: 24 as never })).toBe(false);
+    expect(bad({ maxEpisodes: undefined as never })).toBe(false);
+    expect(bad({ maxEpisodes: null })).toBe(true); // indefinido
+    expect(bad({ maxEpisodes: 13 })).toBe(true);
     expect(bad({ bannedTags: ["a", "b", "c", "d", "e", "f"] })).toBe(false);
     expect(bad({ allowedTags: ["a", "b", "c", "d"] })).toBe(false);
     expect(bad({ bannedTags: ["Action"], allowedTags: ["Action"] })).toBe(false);
@@ -81,7 +84,7 @@ describe.skipIf(!hasTestDb)("inscripción (integración con Postgres)", () => {
     const result = await save();
     expect(result).toMatchObject({
       ok: true,
-      participant: { profileUsername: "GokuFan", status: "active", maxEpisodes: 24 },
+      participant: { profileUsername: "GokuFan", status: "active", maxEpisodes: 26 },
     });
     expect(okVerify).toHaveBeenCalledWith({ platform: "anilist", kind: "name", value: "gokufan" });
     expect(await countActiveParticipants(db, eventId)).toBe(1);
@@ -89,8 +92,8 @@ describe.skipIf(!hasTestDb)("inscripción (integración con Postgres)", () => {
 
   it("editar actualiza la misma fila (un participante por usuario)", async () => {
     await save();
-    const second = await save({ maxEpisodes: 12, bannedTags: [] });
-    expect(second).toMatchObject({ ok: true, participant: { maxEpisodes: 12, bannedTags: [] } });
+    const second = await save({ maxEpisodes: null, bannedTags: [] });
+    expect(second).toMatchObject({ ok: true, participant: { maxEpisodes: null, bannedTags: [] } });
     expect(await countActiveParticipants(db, eventId)).toBe(1);
   });
 

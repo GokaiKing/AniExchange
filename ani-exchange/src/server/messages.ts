@@ -7,6 +7,7 @@
 import type { PhaseKey } from "@/db/schema";
 import { formatAppDateTime } from "@/lib/dates";
 import { discordTimestamp, escapeMarkdown } from "@/lib/discord";
+import { episodeLimitLabel } from "@/lib/registration";
 
 function deadlineLine(deadline: Date): string {
   return `${formatAppDateTime(deadline)} · en tu hora: ${discordTimestamp(deadline)}`;
@@ -20,7 +21,7 @@ export type AssignmentMessageInput = {
   receiverName: string;
   allowedTags: string[];
   bannedTags: string[];
-  maxEpisodes: number;
+  maxEpisodes: number | null;
   allowPtw: boolean;
   /** Cierre de la fase de propuestas. */
   deadline: Date | null;
@@ -38,7 +39,7 @@ export function assignmentMessage(input: AssignmentMessageInput): string {
     `Te tocó darle un anime a **${escapeMarkdown(input.receiverName)}**.`,
     `• Géneros/tags preferidos: ${list(input.allowedTags)}`,
     `• No permitidos: ${list(input.bannedTags)}`,
-    `• Límite: ${input.maxEpisodes} episodios`,
+    `• Límite: ${episodeLimitLabel(input.maxEpisodes)}`,
     `• Plan to Watch: ${input.allowPtw ? "acepta animes de su lista" : "no quiere animes de su lista"}`,
     "",
     `Propón hasta 3 opciones aquí: ${input.link}`,
@@ -69,6 +70,27 @@ export function reminderMessage(input: {
   return [
     `⏰ **${escapeMarkdown(input.eventName)}**: ${text}.`,
     `Cierra: ${deadlineLine(input.deadline)}`,
+    input.link,
+  ].join("\n");
+}
+
+const ON_MISS_TEXT: Record<string, string> = {
+  random_from_ptw: "no se pudo proponer automáticamente desde su Plan to Watch; quedaron como no participó",
+  reassign: "quedaron como no participó y sus receptores necesitan reasignación manual",
+  mark_no_show: "quedaron como no participó",
+};
+
+export function onMissAlertMessage(input: {
+  eventName: string;
+  phaseLabel: string;
+  policy: string;
+  count: number;
+  link: string;
+}): string {
+  const who = input.count === 1 ? "1 participante no cumplió" : `${input.count} participantes no cumplieron`;
+  return [
+    `⚠️ **${escapeMarkdown(input.eventName)}**: al cerrar ${input.phaseLabel}, ${who}; ${ON_MISS_TEXT[input.policy] ?? input.policy}.`,
+    "Revisa el panel:",
     input.link,
   ].join("\n");
 }

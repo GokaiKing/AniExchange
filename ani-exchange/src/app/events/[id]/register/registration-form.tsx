@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import type { TagOption } from "@/lib/anilist";
 import { PLATFORM_LABEL, type Platform } from "@/lib/profiles";
 import {
-  EPISODE_PRESETS,
+  EPISODE_LIMITS,
   MAX_ALLOWED_TAGS,
   MAX_BANNED_TAGS,
+  type MaxEpisodes,
   type RegistrationInput,
 } from "@/lib/registration";
 import {
@@ -35,13 +36,8 @@ const PLACEHOLDER: Record<Platform, string> = {
 export function RegistrationForm({ eventId, tagOptions, initial, isActive }: Props) {
   const [platform, setPlatform] = useState<Platform>(initial?.platform ?? "anilist");
   const [profile, setProfile] = useState(initial?.profile ?? "");
-  const initialPreset =
-    initial && !(EPISODE_PRESETS as readonly number[]).includes(initial.maxEpisodes)
-      ? "other"
-      : String(initial?.maxEpisodes ?? 12);
-  const [episodePreset, setEpisodePreset] = useState(initialPreset);
-  const [otherEpisodes, setOtherEpisodes] = useState(
-    initialPreset === "other" ? String(initial?.maxEpisodes) : "",
+  const [maxEpisodes, setMaxEpisodes] = useState<MaxEpisodes>(
+    initial === null ? 13 : initial.maxEpisodes,
   );
   const [bannedTags, setBannedTags] = useState(initial?.bannedTags ?? []);
   const [allowedTags, setAllowedTags] = useState(initial?.allowedTags ?? []);
@@ -50,8 +46,6 @@ export function RegistrationForm({ eventId, tagOptions, initial, isActive }: Pro
   const [state, setState] = useState<RegistrationState>({});
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const [pending, startTransition] = useTransition();
-
-  const maxEpisodes = episodePreset === "other" ? Number(otherEpisodes) : Number(episodePreset);
 
   const submit = () =>
     startTransition(async () => {
@@ -119,45 +113,29 @@ export function RegistrationForm({ eventId, tagOptions, initial, isActive }: Pro
         {fieldError("profile")}
       </div>
 
-      <div className="grid gap-1.5">
-        <Label htmlFor="episodes">Límite de episodios</Label>
-        <div className="flex flex-wrap items-center gap-3">
-          {EPISODE_PRESETS.map((preset) => (
-            <label key={preset} className="flex items-center gap-2 text-sm">
+      <fieldset className="grid gap-1.5">
+        <legend className="mb-1 text-sm font-medium">Límite de episodios</legend>
+        <div className="flex flex-wrap items-center gap-4">
+          {EPISODE_LIMITS.map((limit) => (
+            <label key={limit.label} className="flex items-center gap-2 text-sm">
               <input
                 type="radio"
                 name="episodes"
-                checked={episodePreset === String(preset)}
-                onChange={() => setEpisodePreset(String(preset))}
+                checked={maxEpisodes === limit.max}
+                onChange={() => setMaxEpisodes(limit.max)}
                 className="accent-primary"
               />
-              {preset}
+              {limit.label}
+              <span className="text-xs text-muted-foreground">({limit.hint})</span>
             </label>
           ))}
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="episodes"
-              checked={episodePreset === "other"}
-              onChange={() => setEpisodePreset("other")}
-              className="accent-primary"
-            />
-            Otro
-          </label>
-          {episodePreset === "other" && (
-            <Input
-              id="episodes"
-              type="number"
-              min={1}
-              value={otherEpisodes}
-              onChange={(e) => setOtherEpisodes(e.target.value)}
-              className="w-24"
-              aria-label="Límite de episodios"
-            />
-          )}
         </div>
+        <p className="text-xs text-muted-foreground">
+          Es un tope: con 2 cours también te pueden tocar series de 1 cour. Todas las propuestas tienen al
+          menos 10 episodios.
+        </p>
         {fieldError("maxEpisodes")}
-      </div>
+      </fieldset>
 
       <TagPicker
         label="Tags baneados"
