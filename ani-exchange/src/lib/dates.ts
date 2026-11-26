@@ -74,11 +74,9 @@ export function formatAppDate(utc: Date): string {
   return inApp(utc).setLocale(LOCALE).toFormat("d LLL yyyy").replace(".", "");
 }
 
-/**
- * Cómo se nombra la zona de referencia ante los participantes (chiste local).
- * Es America/Hermosillo, la hora del admin. Se usa en la web y en los DMs.
- */
-export const APP_TIME_LABEL = "horario del vendehumo del admin";
+import { APP_TIME_LABEL } from "./app-time";
+
+export { APP_TIME_LABEL };
 
 /** "10 dic, 23:59 (horario del vendehumo del admin)" */
 export function formatAppDateTime(utc: Date): string {

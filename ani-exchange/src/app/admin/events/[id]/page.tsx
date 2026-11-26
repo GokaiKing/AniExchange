@@ -89,7 +89,6 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
     autoAdvance: phase.autoAdvance,
     onMiss: phase.onMiss ?? "",
     reminders: phase.reminderDays.join(", "),
-    endsAtLabel: formatAppDateTime(phase.endsAt),
     onMissOptions: hasOnMiss(phase.key)
       ? ON_MISS_OPTIONS[phase.key].map((value) => ({ value, label: ON_MISS_LABEL[value] }))
       : [],

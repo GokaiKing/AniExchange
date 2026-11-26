@@ -1,5 +1,5 @@
 import type { PhaseKey, PhaseStatus } from "@/db/schema";
-import { addDays, dayEndUtc, dayStartUtc, type IsoDate } from "@/lib/dates";
+import { addDays, dayEndUtc, dayStartUtc, formatAppDate, type IsoDate } from "@/lib/dates";
 
 /**
  * Orden de las fases. "watching" ya no se usa: ver la serie y subir la review
@@ -177,7 +177,7 @@ export function validatePhasePlan(
     if (next.startsAt.getTime() <= prev.endsAt.getTime()) {
       errors.push({
         key: next.key,
-        message: `Empieza antes de que termine ${PHASE_LABEL[prev.key]}`,
+        message: `Empieza el ${formatAppDate(next.startsAt)}, pero ${PHASE_LABEL[prev.key]} termina el ${formatAppDate(prev.endsAt)}. Debe empezar después de esa fecha.`,
       });
     }
   }

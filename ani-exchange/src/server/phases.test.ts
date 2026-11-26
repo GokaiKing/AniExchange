@@ -66,7 +66,7 @@ describe("validatePhasePlan", () => {
     const items = edit(plan(), "proposals", { startsAt: dayStartUtc("2026-12-14") });
     expect(errorsOf(items)).toContainEqual({
       key: "proposals",
-      message: expect.stringMatching(/antes de que termine Inscripción/),
+      message: "Empieza el 14 dic 2026, pero Inscripción termina el 14 dic 2026. Debe empezar después de esa fecha.",
     });
   });
 

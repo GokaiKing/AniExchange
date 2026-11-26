@@ -15,14 +15,13 @@ import {
 } from "@/components/ui/table";
 import type { PhaseStatus } from "@/db/schema";
 import { type PhaseInput, updatePhasesAction, type UpdatePhasesState } from "../actions";
+import { endOfDayLabel } from "@/lib/app-time";
 import { PhaseStatusBadge } from "../status-badges";
 
 export type EditorRow = PhaseInput & {
   label: string;
   status: PhaseStatus;
   onMissOptions: { value: string; label: string }[];
-  /** Texto ya formateado en el servidor, p. ej. "10 dic, 23:59 (horario del vendehumo del admin)". */
-  endsAtLabel: string;
 };
 
 const selectClass =
@@ -133,7 +132,7 @@ export function PhaseEditor({ eventId, initialRows }: { eventId: string; initial
                       value={row.end}
                       onChange={(e) => update(row.key, { end: e.target.value })}
                     />
-                    <p className="mt-1 text-xs text-muted-foreground">{row.endsAtLabel}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{endOfDayLabel(row.end) ?? "fecha inválida"}</p>
                   </TableCell>
                   <TableCell className="align-top">
                     <input
