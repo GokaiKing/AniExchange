@@ -76,7 +76,7 @@ export function EvidenceForm({ initial, assignmentId, imagesEnabled }: Props) {
           rows={6}
           maxLength={REVIEW_MAX}
           placeholder="Puedes usar **negritas**, _cursivas_, listas y links."
-          className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="w-full rounded-lg border border-input bg-input/25 backdrop-blur-sm px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
         <p className="text-xs text-muted-foreground">
           {reviewText.trim().length}/{REVIEW_MAX} · mínimo {REVIEW_MIN} caracteres

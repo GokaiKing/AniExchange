@@ -37,7 +37,7 @@ export function ProposalChooser({ proposals, editable }: { proposals: ChooserPro
             disabled={!editable || pending}
             onClick={() => choose(p.id)}
             aria-pressed={p.chosen}
-            className={`flex flex-col overflow-hidden rounded-lg border text-left transition-colors ${
+            className={`glass flex flex-col overflow-hidden rounded-lg border text-left transition-colors ${
               p.chosen ? "border-success ring-2 ring-success" : editable ? "hover:bg-muted/50" : ""
             } disabled:cursor-default`}
           >

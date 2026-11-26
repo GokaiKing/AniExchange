@@ -237,7 +237,7 @@ async function render(tx: Transaction, row: NotificationRow, appBaseUrl: string)
   const [event] = row.eventId
     ? await tx.select().from(events).where(eq(events.id, row.eventId))
     : [];
-  const eventName = event?.name ?? "Intercambio de anime";
+  const eventName = event?.name ?? "AniExchange";
 
   if (row.kind === "assignment") {
     const { assignmentId, redraw, reassigned } = row.payload as AssignmentPayload;

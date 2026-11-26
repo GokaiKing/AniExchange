@@ -50,7 +50,7 @@ export function FlowControls({ eventId, closable, canRedraw }: Props) {
       </div>
 
       {closable && (
-        <div className="space-y-2 rounded-lg border p-3">
+        <div className="glass space-y-2 rounded-lg border p-3">
           <p className="text-sm font-medium">
             Cerrar {closable.label} ahora
             {closable.key === "registration" && " y ejecutar el sorteo"}
@@ -78,7 +78,7 @@ export function FlowControls({ eventId, closable, canRedraw }: Props) {
       )}
 
       {canRedraw && (
-        <div className="space-y-2 rounded-lg border p-3">
+        <div className="glass space-y-2 rounded-lg border p-3">
           <p className="text-sm font-medium">Repetir sorteo</p>
           <p className="text-xs text-muted-foreground">
             Bloqueado por defecto. Genera asignaciones nuevas y marca las anteriores como

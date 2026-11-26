@@ -27,7 +27,7 @@ async function AdminShortcut() {
   const user = await getSessionUser();
   if (!user || !hasRole(user.role, "admin")) return null;
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3">
+    <div className="glass flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3">
       <span className="text-sm text-muted-foreground">Tienes acceso de {user.role}.</span>
       {hasRole(user.role, "superadmin") && (
         <Link href="/admin/events" className={buttonVariants({ size: "sm" })}>
@@ -47,7 +47,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
       <Suspense>
         <Notice searchParams={searchParams} />
       </Suspense>
-      <h1 className="text-2xl font-semibold text-festive-red">Intercambio de Anime</h1>
+      <h1 className="text-2xl font-semibold text-festive-red">AniExchange</h1>
       <Suspense fallback={<div className="h-28 rounded-xl border" />}>
         <CurrentEventCard />
       </Suspense>

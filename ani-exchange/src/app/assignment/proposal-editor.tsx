@@ -57,7 +57,7 @@ export function ProposalEditor({ proposals, preferredTags, max, editable, showCh
       ) : (
         <ul className="space-y-2">
           {proposals.map((p) => (
-            <li key={p.id} className="flex gap-3 rounded-lg border p-2">
+            <li key={p.id} className="glass flex gap-3 rounded-lg border p-2">
               {p.coverUrl && (
                 // eslint-disable-next-line @next/next/no-img-element -- portada externa de AniList
                 <img src={p.coverUrl} alt="" width={48} height={68} className="h-[68px] w-12 rounded object-cover" />

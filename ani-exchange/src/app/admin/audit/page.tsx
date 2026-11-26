@@ -25,7 +25,7 @@ const ACTION_LABEL: Record<string, string> = {
 };
 
 const select =
-  "h-8 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "h-8 rounded-lg border border-input bg-input/25 backdrop-blur-sm px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 function Json({ value }: { value: unknown }) {
   if (value === null || value === undefined) return null;

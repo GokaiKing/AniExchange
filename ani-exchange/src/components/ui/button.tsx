@@ -7,11 +7,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        default:
+          "gloss bg-primary text-primary-foreground shadow-[inset_0_1px_0_0_oklch(1_0_0/0.35),0_6px_20px_-8px_var(--primary)] hover:bg-primary/85",
+        festive:
+          "gloss bg-festive-red text-white shadow-[inset_0_1px_0_0_oklch(1_0_0/0.35),0_6px_20px_-8px_var(--festive-red)] hover:bg-festive-red/85",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border bg-background shadow-[inset_0_1px_0_0_var(--glass-highlight)] backdrop-blur-md hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/25 dark:hover:bg-input/45",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "gloss bg-secondary text-secondary-foreground shadow-[inset_0_1px_0_0_var(--glass-highlight)] hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:

@@ -26,7 +26,7 @@ export type EditorRow = PhaseInput & {
 };
 
 const selectClass =
-  "h-8 w-full min-w-40 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "h-8 w-full min-w-40 rounded-lg border border-input bg-input/25 backdrop-blur-sm px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 function inputsOf(rows: PhaseInput[]): PhaseInput[] {
   return rows.map(({ key, enabled, start, end, autoAdvance, onMiss, reminders }) => ({
