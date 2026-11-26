@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 

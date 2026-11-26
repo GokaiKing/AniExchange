@@ -23,6 +23,9 @@ Sitio para el intercambio anual de anime del grupo de Discord. Next.js 16 + Driz
 | `npm run db:generate` | Genera una migración a partir de `src/db/schema.ts` |
 | `npm run db:migrate` | Aplica migraciones pendientes |
 | `npm run db:studio` | Drizzle Studio |
+| `npm run db:seed` | Crea una edición de ejemplo del año actual (si no existe) |
+
+Las pruebas de integración usan `TEST_DATABASE_URL` (una base cuyo nombre termine en `_test`; se trunca en cada prueba). Para prepararla: `DATABASE_URL=$TEST_DATABASE_URL npm run db:migrate`. Si no está definida, esas pruebas se saltan.
 
 ## Notas
 

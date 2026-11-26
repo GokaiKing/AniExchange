@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { SignInButton, SignOutButton } from "@/components/auth-buttons";
+import { buttonVariants } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/authz";
 import { hasRole } from "@/lib/roles";
 
@@ -14,7 +15,7 @@ async function UserMenu() {
   return (
     <div className="flex items-center gap-3">
       {hasRole(user.role, "admin") && (
-        <Link href="/admin" className="text-sm underline-offset-4 hover:underline">
+        <Link href="/admin" className={buttonVariants({ variant: "outline", size: "sm" })}>
           Panel
         </Link>
       )}

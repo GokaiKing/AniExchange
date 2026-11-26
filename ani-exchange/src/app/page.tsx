@@ -1,4 +1,8 @@
+import Link from "next/link";
 import { Suspense } from "react";
+import { buttonVariants } from "@/components/ui/button";
+import { getSessionUser } from "@/lib/authz";
+import { hasRole } from "@/lib/roles";
 
 const MESSAGES = {
   required: "Inicia sesión con Discord para continuar.",
@@ -17,6 +21,24 @@ async function Notice({ searchParams }: { searchParams: PageProps<"/">["searchPa
   );
 }
 
+async function AdminShortcut() {
+  const user = await getSessionUser();
+  if (!user || !hasRole(user.role, "admin")) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3">
+      <span className="text-sm text-muted-foreground">Tienes acceso de {user.role}.</span>
+      {hasRole(user.role, "superadmin") && (
+        <Link href="/admin/events" className={buttonVariants({ size: "sm" })}>
+          Editar ediciones y fases
+        </Link>
+      )}
+      <Link href="/admin" className={buttonVariants({ variant: "outline", size: "sm" })}>
+        Ir al panel
+      </Link>
+    </div>
+  );
+}
+
 export default function Home({ searchParams }: PageProps<"/">) {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -27,6 +49,9 @@ export default function Home({ searchParams }: PageProps<"/">) {
       <p className="text-foreground/70">
         Aquí aparecerán la inscripción, tu asignación y el feed de reviews.
       </p>
+      <Suspense>
+        <AdminShortcut />
+      </Suspense>
     </div>
   );
 }
