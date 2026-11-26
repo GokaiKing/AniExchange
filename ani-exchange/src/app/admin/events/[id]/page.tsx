@@ -8,10 +8,12 @@ import { getDb } from "@/db";
 import { requireRole } from "@/lib/authz";
 import { formatAppDateTime, toAppDate } from "@/lib/dates";
 import { getEventWithPhases } from "@/server/events";
+import { drawSummary, ensureTicked } from "@/server/tick";
 import { hasOnMiss, ON_MISS_LABEL, ON_MISS_OPTIONS, PHASE_LABEL } from "@/server/phases";
 import { setEventFlagAction } from "../actions";
 import { EventFlagBadges } from "../status-badges";
 import { type EditorRow, PhaseEditor } from "./phase-editor";
+import { FlowControls } from "./flow-controls";
 import { Timeline } from "./timeline";
 
 function FlagButton({
@@ -42,9 +44,27 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
 
-  const data = await getEventWithPhases(getDb(), id);
+  const db = getDb();
+  const now = new Date();
+  await ensureTicked(db, now); // evaluación perezosa
+  const data = await getEventWithPhases(db, id);
   if (!data) notFound();
   const { event, phases } = data;
+  const summary = await drawSummary(db, event.id);
+
+  // Fase en curso: la primera habilitada que no está cerrada.
+  const current = phases.find((p) => p.enabled && p.status !== "closed");
+  const alerts: string[] = [];
+  if (event.paused) {
+    alerts.push(
+      event.drawExecutedAt || current?.key !== "registration" || current.endsAt > now
+        ? "La edición está en pausa: el tick no la procesa."
+        : "La edición se pausó porque no había suficientes participantes para el sorteo. Extiende la fecha de inscripción y luego reanúdala.",
+    );
+  }
+  if (current && current.status === "open" && !current.autoAdvance && current.endsAt < now) {
+    alerts.push(`${PHASE_LABEL[current.key]} ya venció y espera avance manual.`);
+  }
 
   const rows: EditorRow[] = phases.map((phase) => ({
     key: phase.key,
@@ -83,6 +103,42 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
           </div>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sorteo y flujo</CardTitle>
+          <CardDescription>
+            {event.drawExecutedAt ? (
+              <>
+                Sorteo ejecutado el {formatAppDateTime(event.drawExecutedAt)} ·{" "}
+                {summary.active} asignaciones vigentes
+                {summary.superseded > 0 && ` · ${summary.superseded} reemplazadas`}
+              </>
+            ) : (
+              "El sorteo corre automáticamente al cerrar la inscripción."
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {alerts.map((alert) => (
+            <p
+              key={alert}
+              className="rounded-md border border-festive-red/40 bg-accent px-3 py-2 text-sm text-accent-foreground"
+            >
+              {alert}
+            </p>
+          ))}
+          <FlowControls
+            eventId={event.id}
+            closable={
+              current?.status === "open" && !event.paused && !event.archived
+                ? { key: current.key, label: PHASE_LABEL[current.key] }
+                : null
+            }
+            canRedraw={Boolean(event.drawExecutedAt) && !event.archived}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

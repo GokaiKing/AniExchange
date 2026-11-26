@@ -44,3 +44,32 @@ export async function createUser(db: Database, overrides: Partial<typeof schema.
     .returning();
   return row;
 }
+
+/** Crea `n` usuarios inscritos (activos) en la edición. Devuelve los participant ids. */
+export async function addParticipants(
+  db: Database,
+  eventId: string,
+  n: number,
+  status: "active" | "withdrawn" | "no_show" = "active",
+): Promise<string[]> {
+  const ids: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const u = await createUser(db, { role: "user", name: `P${i}` });
+    const [row] = await db
+      .insert(schema.participants)
+      .values({
+        eventId,
+        userId: u.id,
+        platform: "anilist",
+        profileUrl: `https://anilist.co/user/p${i}/`,
+        profileUsername: `p${i}`,
+        maxEpisodes: 24,
+        bannedTags: [],
+        allowedTags: [],
+        status,
+      })
+      .returning({ id: schema.participants.id });
+    ids.push(row.id);
+  }
+  return ids;
+}

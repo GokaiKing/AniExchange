@@ -12,6 +12,7 @@ import { getEventWithPhases } from "@/server/events";
 import { getRegistration, registrationPhaseOf } from "@/server/participants";
 import { isPhaseActive } from "@/server/phases";
 import { getTagCatalog } from "@/server/tag-catalog";
+import { ensureTicked } from "@/server/tick";
 import { RegistrationForm } from "./registration-form";
 
 async function RegisterContent({ params }: { params: PageProps<"/events/[id]/register">["params"] }) {
@@ -20,6 +21,7 @@ async function RegisterContent({ params }: { params: PageProps<"/events/[id]/reg
   if (!z.uuid().safeParse(id).success) notFound();
 
   const db = getDb();
+  await ensureTicked(db);
   const data = await getEventWithPhases(db, id);
   if (!data || data.event.archived) notFound();
   const { event, phases } = data;

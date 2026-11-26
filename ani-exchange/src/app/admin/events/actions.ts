@@ -6,6 +6,8 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { assertRole } from "@/lib/authz";
 import { dayEndUtc, dayStartUtc, isIsoDate } from "@/lib/dates";
+import { REDRAW_CONFIRMATION } from "@/lib/flow";
+import type { PhaseKey } from "@/db/schema";
 import {
   createEvent,
   EventInputError,
@@ -20,6 +22,13 @@ import {
   type PhasePlanItem,
   parseReminderDays,
 } from "@/server/phases";
+import {
+  closePhaseNow,
+  FlowError,
+  redraw,
+  runDueActions,
+  type TickAction,
+} from "@/server/tick";
 
 const isoDate = z.string().refine(isIsoDate, "Fecha inválida");
 
@@ -155,4 +164,75 @@ export async function setEventFlagAction(formData: FormData): Promise<void> {
   const { eventId, flag, value } = flagsSchema.parse(Object.fromEntries(formData));
   await setEventFlags(getDb(), user.id, eventId, { [flag]: value === "true" });
   refresh();
+}
+
+// ---------------------------------------------------------------------------
+// Flujo: tick manual, cerrar fase ahora, repetir sorteo
+// ---------------------------------------------------------------------------
+
+export type FlowState = { ok?: boolean; message?: string; error?: string };
+
+function describeActions(actions: TickAction[]): string {
+  if (actions.length === 0) return "No había nada pendiente.";
+  return actions
+    .map((a) => {
+      switch (a.type) {
+        case "phase.open":
+          return `Se abrió ${PHASE_LABEL[a.phase]}`;
+        case "phase.close":
+          return `Se cerró ${PHASE_LABEL[a.phase]}`;
+        case "phase.waiting_manual":
+          return `${PHASE_LABEL[a.phase]} venció y espera avance manual`;
+        case "draw.execute":
+          return `Sorteo ejecutado (${a.participants} participantes)`;
+        case "draw.insufficient":
+          return `Sorteo no ejecutado: solo ${a.participants} participantes; edición pausada`;
+      }
+    })
+    .join(" · ");
+}
+
+export async function runTickAction(): Promise<FlowState> {
+  await assertRole("superadmin");
+  const actions = await runDueActions(getDb());
+  refresh();
+  return { ok: true, message: describeActions(actions) };
+}
+
+const phaseKeySchema = z.enum(PHASE_ORDER as [PhaseKey, ...PhaseKey[]]);
+
+export async function closePhaseNowAction(
+  eventId: string,
+  key: string,
+  confirmed: boolean,
+): Promise<FlowState> {
+  const user = await assertRole("superadmin");
+  if (!confirmed) return { error: "Marca la casilla de confirmación" };
+  const parsedKey = phaseKeySchema.safeParse(key);
+  if (!z.uuid().safeParse(eventId).success || !parsedKey.success) {
+    return { error: "Datos inválidos" };
+  }
+  try {
+    const actions = await closePhaseNow(getDb(), user.id, eventId, parsedKey.data);
+    refresh();
+    return { ok: true, message: describeActions(actions) };
+  } catch (error) {
+    if (error instanceof FlowError) return { error: error.message };
+    throw error;
+  }
+}
+
+export async function redrawAction(eventId: string, confirmation: string): Promise<FlowState> {
+  const user = await assertRole("superadmin");
+  if (!z.uuid().safeParse(eventId).success) return { error: "Edición inválida" };
+  try {
+    const result = await redraw(getDb(), user.id, eventId, {
+      confirm: confirmation.trim() === REDRAW_CONFIRMATION,
+    });
+    refresh();
+    return { ok: true, message: `Sorteo repetido (${result.participants} participantes)` };
+  } catch (error) {
+    if (error instanceof FlowError) return { error: error.message };
+    throw error;
+  }
 }

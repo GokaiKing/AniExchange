@@ -11,11 +11,13 @@ import {
   registrationPhaseOf,
 } from "@/server/participants";
 import { isPhaseActive } from "@/server/phases";
+import { ensureTicked } from "@/server/tick";
 
 /** Tarjeta del home con la edición vigente y el estado de inscripción del usuario. */
 export async function CurrentEventCard() {
   const user = await getSessionUser();
   const db = getDb();
+  await ensureTicked(db); // evaluación perezosa (spec §15)
   const current = await getCurrentEvent(db);
 
   if (!current) {
