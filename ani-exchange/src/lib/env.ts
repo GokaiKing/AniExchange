@@ -22,6 +22,8 @@ const envSchema = z.object({
   APP_BASE_URL: z.url().default("http://localhost:3000"),
   /** DMs por tick (spec §10). */
   DM_BATCH_SIZE: z.coerce.number().int().min(1).max(50).default(10),
+  /** Vercel Blob (imágenes de reviews). Sin token, la subida de imágenes se desactiva. */
+  BLOB_READ_WRITE_TOKEN: z.string().default(""),
 });
 
 export type Env = z.infer<typeof envSchema>;

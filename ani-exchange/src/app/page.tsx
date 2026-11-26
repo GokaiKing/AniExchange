@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { CurrentEventCard } from "@/components/current-event-card";
+import { ReviewFeed } from "@/components/review-feed";
 import { buttonVariants } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/authz";
 import { hasRole } from "@/lib/roles";
@@ -52,6 +53,9 @@ export default function Home({ searchParams }: PageProps<"/">) {
       </Suspense>
       <Suspense>
         <AdminShortcut />
+      </Suspense>
+      <Suspense fallback={<p className="text-sm text-muted-foreground">Cargando reviews…</p>}>
+        <ReviewFeed />
       </Suspense>
     </div>
   );

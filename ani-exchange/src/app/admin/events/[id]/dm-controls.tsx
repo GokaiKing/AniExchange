@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { type FlowState, processDmsAction, resendDmAction } from "../actions";
 
@@ -22,7 +23,12 @@ const KIND_LABEL: Record<string, string> = {
 export function DmControls({ rows, botConfigured }: { rows: AttentionRow[]; botConfigured: boolean }) {
   const [state, setState] = useState<FlowState>({});
   const [pending, startTransition] = useTransition();
-  const run = (fn: () => Promise<FlowState>) => startTransition(async () => setState(await fn()));
+  const run = (fn: () => Promise<FlowState>) =>
+    startTransition(async () => {
+      const result = await fn();
+      setState(result);
+      if (result.ok) toast.success(result.message ?? "Listo");
+    });
 
   return (
     <div className="space-y-4">
@@ -74,7 +80,6 @@ export function DmControls({ rows, botConfigured }: { rows: AttentionRow[]; botC
         </div>
       )}
 
-      {state.message && <p className="text-sm text-success">{state.message}</p>}
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
     </div>
   );

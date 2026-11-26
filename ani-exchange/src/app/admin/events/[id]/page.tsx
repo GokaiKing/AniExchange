@@ -26,7 +26,7 @@ function FlagButton({
   children,
 }: {
   eventId: string;
-  flag: "paused" | "archived";
+  flag: "paused" | "archived" | "feedPublic";
   value: boolean;
   children: React.ReactNode;
 }) {
@@ -101,6 +101,9 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
             <EventFlagBadges paused={event.paused} archived={event.archived} />
           </div>
           <div className="flex gap-2">
+            <FlagButton eventId={event.id} flag="feedPublic" value={!event.feedPublic}>
+              {event.feedPublic ? "Hacer feed privado" : "Hacer feed público"}
+            </FlagButton>
             <FlagButton eventId={event.id} flag="paused" value={!event.paused}>
               {event.paused ? "Reanudar" : "Pausar"}
             </FlagButton>

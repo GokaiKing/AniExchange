@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addProposalAction, type ProposalActionState, removeProposalAction } from "./actions";
@@ -33,12 +34,21 @@ export function ProposalEditor({ proposals, preferredTags, max, editable, showCh
   const [state, setState] = useState<ProposalActionState>({});
   const [pending, startTransition] = useTransition();
 
-  const run = (fn: () => Promise<ProposalActionState>, onOk?: () => void) =>
+  const run = (fn: () => Promise<ProposalActionState>, onOk?: (result: ProposalActionState) => void) =>
     startTransition(async () => {
       const result = await fn();
       setState(result);
-      if (result.ok) onOk?.();
+      if (result.ok) onOk?.(result);
     });
+
+  const notifyAdded = (result: ProposalActionState) => {
+    setLink("");
+    if (result.warnings && result.warnings.length > 0) {
+      toast.warning("Propuesta agregada, pero ojo", { description: result.warnings.join(" · ") });
+    } else {
+      toast.success("Propuesta agregada");
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -82,7 +92,7 @@ export function ProposalEditor({ proposals, preferredTags, max, editable, showCh
                   variant="ghost"
                   size="sm"
                   disabled={pending}
-                  onClick={() => run(() => removeProposalAction(p.id))}
+                  onClick={() => run(() => removeProposalAction(p.id), () => toast.success("Propuesta quitada"))}
                 >
                   Quitar
                 </Button>
@@ -97,7 +107,7 @@ export function ProposalEditor({ proposals, preferredTags, max, editable, showCh
           className="flex flex-wrap gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            run(() => addProposalAction(link), () => setLink(""));
+            run(() => addProposalAction(link), notifyAdded);
           }}
         >
           <Input
@@ -121,9 +131,6 @@ export function ProposalEditor({ proposals, preferredTags, max, editable, showCh
       )}
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
-      {state.ok && state.warnings && state.warnings.length > 0 && (
-        <p className="text-sm text-festive-red">Agregada, pero ojo: {state.warnings.join(" · ")}</p>
-      )}
     </div>
   );
 }

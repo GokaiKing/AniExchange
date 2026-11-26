@@ -1,7 +1,9 @@
 import { getDb } from "@/db";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getEnv } from "@/lib/env";
+import { isBlobConfigured, vercelBlobStore } from "@/server/blob-store";
 import { dmOptionsFromEnv } from "@/server/dm-config";
+import { cleanupOrphanImages } from "@/server/evidence";
 import { runTick } from "@/server/tick";
 
 /**
@@ -13,8 +15,19 @@ async function handle(request: Request): Promise<Response> {
   if (!isCronAuthorized(request.headers.get("authorization"), getEnv().CRON_SECRET)) {
     return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
-  const result = await runTick(getDb(), { dm: dmOptionsFromEnv() });
-  return Response.json({ ok: true, ...result });
+  const db = getDb();
+  const result = await runTick(db, { dm: dmOptionsFromEnv() });
+
+  // Una vez al día (07:xx UTC = 00:xx Hermosillo): borrar imágenes huérfanas.
+  let orphanImagesDeleted: number | null = null;
+  if (isBlobConfigured() && new Date().getUTCHours() === 7) {
+    try {
+      orphanImagesDeleted = await cleanupOrphanImages(db, vercelBlobStore());
+    } catch {
+      orphanImagesDeleted = null;
+    }
+  }
+  return Response.json({ ok: true, ...result, orphanImagesDeleted });
 }
 
 export const GET = handle;

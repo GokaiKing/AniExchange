@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +63,10 @@ export function PhaseEditor({ eventId, initialRows }: { eventId: string; initial
     startTransition(async () => {
       const result = await updatePhasesAction(eventId, inputs, confirmClosed);
       setState(result);
-      if (result.ok) setConfirmClosed(false);
+      if (result.ok) {
+        setConfirmClosed(false);
+        toast.success("Fases guardadas");
+      }
     });
   };
 
@@ -215,7 +219,6 @@ export function PhaseEditor({ eventId, initialRows }: { eventId: string; initial
             Descartar cambios
           </Button>
         )}
-        {state.ok && !dirty && <span className="text-sm text-muted-foreground">Guardado.</span>}
       </div>
     </form>
   );

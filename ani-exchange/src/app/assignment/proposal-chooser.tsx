@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { chooseProposalAction, type ProposalActionState } from "./actions";
 
 export type ChooserProposal = {
@@ -20,7 +21,10 @@ export function ProposalChooser({ proposals, editable }: { proposals: ChooserPro
 
   const choose = (id: string) =>
     startTransition(async () => {
-      setState(await chooseProposalAction(id));
+      const result = await chooseProposalAction(id);
+      setState(result);
+      const title = proposals.find((p) => p.id === id)?.title;
+      if (result.ok) toast.success(title ? `Elegiste ${title}` : "Elección guardada");
     });
 
   return (

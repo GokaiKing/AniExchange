@@ -194,7 +194,7 @@ export async function updatePhases(
   });
 }
 
-export type EventFlags = { paused?: boolean; archived?: boolean };
+export type EventFlags = { paused?: boolean; archived?: boolean; feedPublic?: boolean };
 
 export async function setEventFlags(
   db: Database,
@@ -211,8 +211,8 @@ export async function setEventFlags(
       action: "event.flags.update",
       entity: "event",
       entityId: eventId,
-      before: { paused: before.paused, archived: before.archived },
-      after: { paused: after.paused, archived: after.archived },
+      before: { paused: before.paused, archived: before.archived, feedPublic: before.feedPublic },
+      after: { paused: after.paused, archived: after.archived, feedPublic: after.feedPublic },
     });
   });
 }

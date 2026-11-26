@@ -13,7 +13,12 @@ import { getCurrentEvent } from "@/server/participants";
 import { isPhaseActive } from "@/server/phases";
 import { MAX_PROPOSALS } from "@/server/proposal-rules";
 import { listGiverProposals, listReceiverProposals } from "@/server/proposals";
+import { chosenAnime, getEvidence } from "@/server/evidence";
 import { ensureTicked } from "@/server/tick";
+import { ReviewImages } from "@/components/review-images";
+import { ReviewMarkdown } from "@/components/review-markdown";
+import { isBlobConfigured } from "@/server/blob-store";
+import { EvidenceForm } from "./evidence-form";
 import { ProposalChooser } from "./proposal-chooser";
 import { ProposalEditor } from "./proposal-editor";
 
@@ -127,8 +132,8 @@ async function AssignmentContent() {
   const view = await getMyAssignmentView(db, user.id);
   const now = new Date();
   const current = await getCurrentEvent(db);
-  const phase = (key: "proposals" | "selection") => current?.phases.find((p) => p.key === key);
-  const active = (key: "proposals" | "selection") => {
+  const phase = (key: "proposals" | "selection" | "evidence") => current?.phases.find((p) => p.key === key);
+  const active = (key: "proposals" | "selection" | "evidence") => {
     const p = phase(key);
     return Boolean(current && p && isPhaseActive(p, current.event, now));
   };
@@ -141,6 +146,13 @@ async function AssignmentContent() {
     view.state === "drawn" && view.asReceiver && selectionStarted
       ? await listReceiverProposals(db, view.asReceiver.assignmentId)
       : [];
+  // Ya no se puede cambiar la elección: mostrar el anime a ver y la evidencia.
+  const selectionOver = Boolean(selection && selection.status === "closed");
+  const myAnime =
+    view.state === "drawn" && view.asReceiver && selectionOver ? await chosenAnime(db, view.asReceiver.assignmentId) : null;
+  const myEvidence =
+    view.state === "drawn" && view.asReceiver && myAnime ? await getEvidence(db, view.asReceiver.assignmentId) : null;
+  const evidencePhase = phase("evidence");
 
   if (view.state === "no_event") {
     return <p className="text-muted-foreground">No hay un intercambio en curso.</p>;
@@ -195,8 +207,70 @@ async function AssignmentContent() {
           )}
           {view.asReceiver && (
             <ReceiverCard view={view.asReceiver}>
-              {receiverProposals.length > 0 && (
-                <ProposalChooser proposals={receiverProposals} editable={active("selection")} />
+              {myAnime ? (
+                <div className="space-y-4 border-t pt-3">
+                  <div className="flex gap-3">
+                    {myAnime.coverUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element -- portada externa de AniList
+                      <img src={myAnime.coverUrl} alt="" width={64} height={90} className="h-[90px] w-16 rounded object-cover" />
+                    )}
+                    <div>
+                      <p className="text-xs text-muted-foreground">Te toca ver</p>
+                      <a href={myAnime.sourceUrl} target="_blank" rel="noreferrer" className="text-lg font-semibold underline-offset-4 hover:underline">
+                        {myAnime.title}
+                      </a>
+                      <p className="text-xs text-muted-foreground">
+                        {myAnime.episodes ?? "?"} episodios{myAnime.autoChosen && " · elegida automáticamente"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {active("evidence") ? (
+                    <div>
+                      <p className="mb-2 font-medium">{myEvidence ? "Tu review" : "Sube tu review"}</p>
+                      <EvidenceForm
+                        key={myEvidence?.updatedAt.toISOString() ?? "new"}
+                        assignmentId={view.asReceiver.assignmentId}
+                        imagesEnabled={isBlobConfigured()}
+                        initial={
+                          myEvidence && {
+                            reviewText: myEvidence.reviewText,
+                            rating: myEvidence.rating === null ? null : Number(myEvidence.rating),
+                            trackerUrl: myEvidence.trackerUrl,
+                            containsSpoilers: myEvidence.containsSpoilers,
+                            images: myEvidence.images,
+                          }
+                        }
+                      />
+                      {evidencePhase && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Puedes editarla hasta el <AppDateTime date={evidencePhase.endsAt} />.
+                        </p>
+                      )}
+                    </div>
+                  ) : myEvidence ? (
+                    <div>
+                      <p className="mb-2 font-medium">
+                        Tu review{myEvidence.rating !== null && ` · ${Number(myEvidence.rating)}/10`}
+                      </p>
+                      <div className="space-y-2">
+                        <ReviewMarkdown text={myEvidence.reviewText} />
+                        <ReviewImages images={myEvidence.images} />
+                      </div>
+                    </div>
+                  ) : (
+                    evidencePhase &&
+                    evidencePhase.status === "pending" && (
+                      <p className="text-muted-foreground">
+                        Podrás subir tu review a partir del <AppDateTime date={evidencePhase.startsAt} />.
+                      </p>
+                    )
+                  )}
+                </div>
+              ) : (
+                receiverProposals.length > 0 && (
+                  <ProposalChooser proposals={receiverProposals} editable={active("selection")} />
+                )
               )}
             </ReceiverCard>
           )}

@@ -274,6 +274,27 @@ export const evidence = pgTable(
   (t) => [check("evidence_rating_range", sql`${t.rating} between 0 and 10`)],
 );
 
+/** Imágenes de una review (máx. 4), guardadas en Vercel Blob. */
+export const evidenceImages = pgTable(
+  "evidence_images",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    evidenceId: uuid("evidence_id")
+      .notNull()
+      .references(() => evidence.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    url: text("url").notNull(),
+    thumbUrl: text("thumb_url").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique("evidence_images_position_unique").on(t.evidenceId, t.position),
+    check("evidence_images_position_range", sql`${t.position} between 0 and 3`),
+  ],
+);
+
 export const notificationLog = pgTable(
   "notification_log",
   {

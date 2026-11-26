@@ -43,6 +43,13 @@
       "when": 1795669082904,
       "tag": "0005_proposal_misses_preferred",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795670177337,
+      "tag": "0006_evidence_images",
+      "breakpoints": true
     }
   ]
 }

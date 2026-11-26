@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,22 +50,26 @@ export function RegistrationForm({ eventId, tagOptions, initial, isActive }: Pro
 
   const submit = () =>
     startTransition(async () => {
-      setState(
-        await saveRegistrationAction(eventId, {
-          platform,
-          profile,
-          maxEpisodes,
-          bannedTags,
-          allowedTags,
-          allowPtw,
-        }),
-      );
+      const result = await saveRegistrationAction(eventId, {
+        platform,
+        profile,
+        maxEpisodes,
+        bannedTags,
+        allowedTags,
+        allowPtw,
+      });
+      setState(result);
+      if (result.ok) {
+        toast.success(isActive ? "Inscripción actualizada" : `¡Inscrito como ${result.profileUsername}!`);
+      }
     });
 
   const withdraw = () =>
     startTransition(async () => {
-      setState(await withdrawRegistrationAction(eventId));
+      const result = await withdrawRegistrationAction(eventId);
+      setState(result);
       setConfirmWithdraw(false);
+      if (result.ok) toast.success("Te retiraste del intercambio");
     });
 
   const fieldError = (field: keyof RegistrationInput) =>
@@ -176,13 +181,6 @@ export function RegistrationForm({ eventId, tagOptions, initial, isActive }: Pro
       </label>
 
       {state.error && !state.field && <p className="text-sm text-destructive">{state.error}</p>}
-      {state.ok && (
-        <p className="text-sm text-success">
-          {state.profileUsername
-            ? `¡Listo! Inscrito como ${state.profileUsername}.`
-            : "Listo."}
-        </p>
-      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={pending}>

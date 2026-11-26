@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { REDRAW_CONFIRMATION } from "@/lib/flow";
@@ -30,6 +31,7 @@ export function FlowControls({ eventId, closable, canRedraw }: Props) {
       const result = await fn();
       setState(result);
       if (result.ok) {
+        toast.success(result.message ?? "Listo");
         setConfirmClose(false);
         setRedrawUnlocked(false);
         setRedrawText("");
@@ -110,7 +112,6 @@ export function FlowControls({ eventId, closable, canRedraw }: Props) {
         </div>
       )}
 
-      {state.message && <p className="text-sm text-success">{state.message}</p>}
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
     </div>
   );
