@@ -5,6 +5,7 @@ import {
   dayEndUtc,
   dayStartUtc,
   diffDays,
+  dueReminderDay,
   formatAppDate,
   formatAppDateTime,
   isIsoDate,
@@ -75,5 +76,28 @@ describe("validación", () => {
 
   it("dayEndUtc rechaza fechas inválidas", () => {
     expect(() => dayEndUtc("2026-13-01")).toThrow();
+  });
+});
+
+describe("dueReminderDay", () => {
+  const ends = dayEndUtc("2026-12-10");
+  const at = (iso: string) => new Date(iso);
+
+  it("corre durante el día que cae d días antes del cierre (hora de Hermosillo)", () => {
+    // 9 dic 00:00 Hermosillo = 9 dic 07:00 UTC
+    expect(dueReminderDay(ends, [1], at("2026-12-09T07:00:00Z"))).toBe(1);
+    expect(dueReminderDay(ends, [1], at("2026-12-10T06:59:59Z"))).toBe(1);
+    expect(dueReminderDay(ends, [1], at("2026-12-09T06:59:59Z"))).toBeNull();
+  });
+
+  it("elige el recordatorio del día en curso entre varios", () => {
+    expect(dueReminderDay(ends, [3, 1], at("2026-12-07T12:00:00Z"))).toBe(3);
+    expect(dueReminderDay(ends, [3, 1], at("2026-12-08T12:00:00Z"))).toBeNull();
+    expect(dueReminderDay(ends, [3, 1], at("2026-12-09T12:00:00Z"))).toBe(1);
+  });
+
+  it("nada después del cierre ni sin recordatorios", () => {
+    expect(dueReminderDay(ends, [1], at("2026-12-11T08:00:00Z"))).toBeNull();
+    expect(dueReminderDay(ends, [], at("2026-12-09T12:00:00Z"))).toBeNull();
   });
 });

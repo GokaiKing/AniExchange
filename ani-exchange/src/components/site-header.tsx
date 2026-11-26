@@ -14,6 +14,9 @@ async function UserMenu() {
   const roleLabel = ROLE_LABEL[user.role];
   return (
     <div className="flex items-center gap-3">
+      <Link href="/assignment" className="text-sm underline-offset-4 hover:underline">
+        Mi asignación
+      </Link>
       {hasRole(user.role, "admin") && (
         <Link href="/admin" className={buttonVariants({ variant: "outline", size: "sm" })}>
           Panel

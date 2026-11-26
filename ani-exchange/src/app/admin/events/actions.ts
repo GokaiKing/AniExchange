@@ -22,6 +22,12 @@ import {
   type PhasePlanItem,
   parseReminderDays,
 } from "@/server/phases";
+import { dmOptionsFromEnv } from "@/server/dm-config";
+import {
+  enqueueReminders,
+  processNotificationBatch,
+  resendNotification,
+} from "@/server/notifications";
 import {
   closePhaseNow,
   FlowError,
@@ -235,4 +241,32 @@ export async function redrawAction(eventId: string, confirmation: string): Promi
     if (error instanceof FlowError) return { error: error.message };
     throw error;
   }
+}
+
+// ---------------------------------------------------------------------------
+// DMs
+// ---------------------------------------------------------------------------
+
+export async function processDmsAction(): Promise<FlowState> {
+  await assertRole("superadmin");
+  const dm = dmOptionsFromEnv();
+  if (!dm) return { error: "Falta DISCORD_BOT_TOKEN: no se pueden enviar DMs" };
+  const db = getDb();
+  await enqueueReminders(db);
+  const result = await processNotificationBatch(db, dm);
+  refresh();
+  const parts = [`${result.sent} enviados`];
+  if (result.retrying) parts.push(`${result.retrying} se reintentarán`);
+  if (result.failed) parts.push(`${result.failed} fallaron`);
+  if (result.skipped) parts.push(`${result.skipped} omitidos`);
+  if (result.rateLimited) parts.push("Discord pidió esperar; el resto sale en el próximo tick");
+  return { ok: true, message: parts.join(" · ") };
+}
+
+export async function resendDmAction(notificationId: string): Promise<FlowState> {
+  const user = await assertRole("superadmin");
+  if (!z.uuid().safeParse(notificationId).success) return { error: "DM inválido" };
+  const ok = await resendNotification(getDb(), user.id, notificationId);
+  refresh();
+  return ok ? { ok: true, message: "En cola de nuevo" } : { error: "Ese DM ya no se puede reenviar" };
 }

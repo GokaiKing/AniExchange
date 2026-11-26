@@ -15,6 +15,13 @@
       "when": 1795666971472,
       "tag": "0001_assignments_superseded_deferrable",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795667459641,
+      "tag": "0002_notification_payload",
+      "breakpoints": true
     }
   ]
 }

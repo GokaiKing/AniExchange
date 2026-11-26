@@ -20,6 +20,8 @@ const envSchema = z.object({
   SUPERADMIN_DISCORD_IDS: commaList,
   APP_TIMEZONE: z.literal("America/Hermosillo").default("America/Hermosillo"),
   APP_BASE_URL: z.url().default("http://localhost:3000"),
+  /** DMs por tick (spec §10). */
+  DM_BATCH_SIZE: z.coerce.number().int().min(1).max(50).default(10),
 });
 
 export type Env = z.infer<typeof envSchema>;

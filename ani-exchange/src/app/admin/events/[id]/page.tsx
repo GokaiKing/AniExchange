@@ -8,11 +8,14 @@ import { getDb } from "@/db";
 import { requireRole } from "@/lib/authz";
 import { formatAppDateTime, toAppDate } from "@/lib/dates";
 import { getEventWithPhases } from "@/server/events";
+import { dmOptionsFromEnv } from "@/server/dm-config";
+import { notificationStats, notificationsNeedingAttention } from "@/server/notifications";
 import { drawSummary, ensureTicked } from "@/server/tick";
 import { hasOnMiss, ON_MISS_LABEL, ON_MISS_OPTIONS, PHASE_LABEL } from "@/server/phases";
 import { setEventFlagAction } from "../actions";
 import { EventFlagBadges } from "../status-badges";
 import { type EditorRow, PhaseEditor } from "./phase-editor";
+import { DmControls } from "./dm-controls";
 import { FlowControls } from "./flow-controls";
 import { Timeline } from "./timeline";
 
@@ -50,7 +53,11 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
   const data = await getEventWithPhases(db, id);
   if (!data) notFound();
   const { event, phases } = data;
-  const summary = await drawSummary(db, event.id);
+  const [summary, dmStats, dmAttention] = await Promise.all([
+    drawSummary(db, event.id),
+    notificationStats(db, event.id),
+    notificationsNeedingAttention(db, event.id),
+  ]);
 
   // Fase en curso: la primera habilitada que no está cerrada.
   const current = phases.find((p) => p.enabled && p.status !== "closed");
@@ -137,6 +144,19 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
             }
             canRedraw={Boolean(event.drawExecutedAt) && !event.archived}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>DMs</CardTitle>
+          <CardDescription>
+            {dmStats.sent} enviados · {dmStats.pending} en cola · {dmStats.failed} fallidos
+            {dmStats.skipped > 0 && ` · ${dmStats.skipped} omitidos`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DmControls rows={dmAttention} botConfigured={dmOptionsFromEnv() !== null} />
         </CardContent>
       </Card>
 

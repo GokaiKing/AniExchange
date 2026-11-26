@@ -12,16 +12,23 @@ import {
   assignments,
   eventPhases,
   events,
-  notificationLog,
   participants,
   proposals,
   type PhaseKey,
-  user,
 } from "@/db/schema";
 import { writeAudit } from "@/lib/audit";
 import { toAppDate } from "@/lib/dates";
 import { drawPairs, MIN_PARTICIPANTS, newSeed } from "./draw";
 import type { EventRow, PhaseRow } from "./events";
+import {
+  type BatchResult,
+  type DmProcessingOptions,
+  enqueueAdminAlert,
+  enqueueAssignmentDms,
+  enqueueReminders,
+  processNotificationBatch,
+  skipAssignmentDms,
+} from "./notifications";
 import { PHASE_LABEL } from "./phases";
 
 export type TickAction =
@@ -45,23 +52,6 @@ async function activeParticipantIds(tx: Transaction, eventId: string): Promise<s
   return rows.map((row) => row.id);
 }
 
-/** Avisa a los superadmins (el envío del DM llega en el hito 5). */
-async function alertSuperadmins(tx: Transaction, eventId: string, kind: string, dedupeKey: string) {
-  const admins = await tx.select({ id: user.id }).from(user).where(eq(user.role, "superadmin"));
-  if (admins.length === 0) return;
-  await tx
-    .insert(notificationLog)
-    .values(
-      admins.map((admin) => ({
-        eventId,
-        userId: admin.id,
-        kind,
-        dedupeKey: `${dedupeKey}:${admin.id}`,
-      })),
-    )
-    .onConflictDoNothing({ target: notificationLog.dedupeKey });
-}
-
 /**
  * Ejecuta el sorteo de la edición. Devuelve false (y pausa la edición) si hay
  * menos participantes activos que el mínimo.
@@ -79,10 +69,11 @@ async function executeDraw(
   if (ids.length < MIN_PARTICIPANTS) {
     await tx.update(events).set({ paused: true }).where(eq(events.id, event.id));
     event.paused = true;
-    await alertSuperadmins(
+    await enqueueAdminAlert(
       tx,
       event.id,
       "admin_alert",
+      { participants: ids.length },
       `${event.id}:draw_insufficient:${toAppDate(now)}`,
     );
     await writeAudit(tx, {
@@ -98,7 +89,15 @@ async function executeDraw(
 
   const seed = newSeed();
   const pairs = drawPairs(ids, seed);
-  await tx.insert(assignments).values(pairs.map((pair) => ({ eventId: event.id, ...pair })));
+  const inserted = await tx
+    .insert(assignments)
+    .values(pairs.map((pair) => ({ eventId: event.id, ...pair })))
+    .returning({ id: assignments.id });
+  await enqueueAssignmentDms(
+    tx,
+    event.id,
+    inserted.map((row) => row.id),
+  );
   await tx
     .update(events)
     .set({ drawSeed: seed, drawExecutedAt: now })
@@ -238,8 +237,28 @@ export async function runDueActions(db: Database, now: Date = new Date()): Promi
       await advance(tx, locked.event, locked.phases, now, actions);
     });
   }
-  // TODO(hito 5): encolar recordatorios y procesar el lote de DMs pendientes.
   return actions;
+}
+
+export type TickResult = {
+  actions: TickAction[];
+  remindersEnqueued: number;
+  dms: BatchResult | null;
+};
+
+/**
+ * Tick completo (cron): avanza fases, encola recordatorios y, si hay bot
+ * configurado, envía un lote de DMs.
+ */
+export async function runTick(
+  db: Database,
+  options: { dm: DmProcessingOptions | null },
+  now: Date = new Date(),
+): Promise<TickResult> {
+  const actions = await runDueActions(db, now);
+  const remindersEnqueued = await enqueueReminders(db, now);
+  const dms = options.dm ? await processNotificationBatch(db, options.dm, now) : null;
+  return { actions, remindersEnqueued, dms };
 }
 
 /**
@@ -379,8 +398,18 @@ export async function redraw(
         .set({ supersededBy: newIdByGiver.get(old.giverId) ?? fallbackId })
         .where(eq(assignments.id, old.id));
     }
-    // 2) Insertar las nuevas.
+    // 2) Insertar las nuevas y reemplazar los DMs pendientes.
     await tx.insert(assignments).values(pairs.map((pair) => ({ ...pair, eventId })));
+    await skipAssignmentDms(
+      tx,
+      current.map((old) => old.id),
+    );
+    await enqueueAssignmentDms(
+      tx,
+      eventId,
+      pairs.map((pair) => pair.id),
+      { redraw: true },
+    );
     await tx
       .update(events)
       .set({ drawSeed: seed, drawExecutedAt: new Date() })

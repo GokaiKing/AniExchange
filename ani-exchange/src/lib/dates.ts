@@ -85,3 +85,21 @@ export function formatAppDateTime(utc: Date): string {
   const text = inApp(utc).setLocale(LOCALE).toFormat("d LLL, HH:mm").replace(".", "");
   return `${text} (${APP_TIME_LABEL})`;
 }
+
+/**
+ * Recordatorio que toca ahora (spec §5: "días antes del cierre").
+ * El recordatorio de `d` días corre durante el día de calendario (Hermosillo)
+ * que cae `d` días antes del día de cierre. Si ese día ya pasó, no se manda
+ * tarde. Devuelve el `d` vigente o null.
+ */
+export function dueReminderDay(endsAt: Date, reminderDays: readonly number[], now: Date): number | null {
+  if (now.getTime() > endsAt.getTime()) return null;
+  const endDay = toAppDate(endsAt);
+  for (const d of reminderDays) {
+    const day = addDays(endDay, -d);
+    if (dayStartUtc(day).getTime() <= now.getTime() && now.getTime() <= dayEndUtc(day).getTime()) {
+      return d;
+    }
+  }
+  return null;
+}

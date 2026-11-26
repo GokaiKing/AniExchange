@@ -274,6 +274,8 @@ export const notificationLog = pgTable(
     eventId: uuid("event_id").references(() => events.id, { onDelete: "cascade" }),
     userId: text("user_id").references(() => user.id),
     kind: text("kind").notNull(),
+    /** Datos para armar el mensaje al enviarlo (assignmentId, fase, conteos…). */
+    payload: jsonb("payload").notNull().default({}),
     dedupeKey: text("dedupe_key").notNull().unique(),
     status: dmStatus("status").notNull().default("pending"),
     attempts: integer("attempts").notNull().default(0),
