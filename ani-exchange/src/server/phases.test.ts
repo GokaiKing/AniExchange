@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { dayEndUtc, dayStartUtc, toAppDate } from "@/lib/dates";
 import {
   defaultPhasePlan,
+  isPhaseActive,
   parseReminderDays,
   PHASE_ORDER,
   type PhasePlanItem,
@@ -126,5 +127,34 @@ describe("parseReminderDays", () => {
   it("rechaza texto no numérico", () => {
     expect(parseReminderDays("1, dos")).toBeNull();
     expect(parseReminderDays("-1")).toBeNull();
+  });
+});
+
+describe("isPhaseActive", () => {
+  const phase = {
+    enabled: true,
+    status: "pending" as const,
+    startsAt: dayStartUtc("2026-12-01"),
+    endsAt: dayEndUtc("2026-12-14"),
+  };
+  const event = { paused: false, archived: false };
+  const at = (iso: string) => new Date(iso);
+
+  it("activa entre inicio y fin, aunque el tick no la haya abierto", () => {
+    expect(isPhaseActive(phase, event, at("2026-12-01T07:00:00.000Z"))).toBe(true);
+    expect(isPhaseActive(phase, event, at("2026-12-15T06:59:59.999Z"))).toBe(true);
+  });
+
+  it("inactiva antes y después", () => {
+    expect(isPhaseActive(phase, event, at("2026-12-01T06:59:59.999Z"))).toBe(false);
+    expect(isPhaseActive(phase, event, at("2026-12-15T07:00:00.000Z"))).toBe(false);
+  });
+
+  it("inactiva si está cerrada, deshabilitada o la edición pausada/archivada", () => {
+    const now = at("2026-12-05T12:00:00Z");
+    expect(isPhaseActive({ ...phase, status: "closed" }, event, now)).toBe(false);
+    expect(isPhaseActive({ ...phase, enabled: false }, event, now)).toBe(false);
+    expect(isPhaseActive(phase, { ...event, paused: true }, now)).toBe(false);
+    expect(isPhaseActive(phase, { ...event, archived: true }, now)).toBe(false);
   });
 });

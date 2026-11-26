@@ -25,7 +25,7 @@ async function UserMenu() {
       )}
       <span className="text-sm font-medium">{user.name}</span>
       {roleLabel && (
-        <span className="rounded bg-foreground/10 px-1.5 py-0.5 text-xs">{roleLabel}</span>
+        <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">{roleLabel}</span>
       )}
       <SignOutButton />
     </div>
@@ -34,13 +34,16 @@ async function UserMenu() {
 
 export function SiteHeader() {
   return (
-    <header className="flex items-center justify-between border-b border-foreground/10 px-6 py-3">
-      <Link href="/" className="font-semibold">
-        Intercambio de Anime
-      </Link>
-      <Suspense fallback={<div className="h-8 w-32" />}>
-        <UserMenu />
-      </Suspense>
+    <header className="border-b border-foreground/10">
+      <div className="festive-stripe h-1.5" aria-hidden />
+      <div className="flex items-center justify-between px-6 py-3">
+        <Link href="/" className="font-semibold text-festive-red">
+          Intercambio de Anime
+        </Link>
+        <Suspense fallback={<div className="h-8 w-32" />}>
+          <UserMenu />
+        </Suspense>
+      </div>
     </header>
   );
 }

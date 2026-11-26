@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { CurrentEventCard } from "@/components/current-event-card";
 import { buttonVariants } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/authz";
 import { hasRole } from "@/lib/roles";
@@ -15,7 +16,7 @@ async function Notice({ searchParams }: { searchParams: PageProps<"/">["searchPa
     params.error === "forbidden" ? "forbidden" : params.login === "required" ? "required" : null;
   if (!key) return null;
   return (
-    <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm">
+    <p className="rounded-md border border-festive-red/40 bg-accent text-accent-foreground px-4 py-2 text-sm">
       {MESSAGES[key]}
     </p>
   );
@@ -45,10 +46,10 @@ export default function Home({ searchParams }: PageProps<"/">) {
       <Suspense>
         <Notice searchParams={searchParams} />
       </Suspense>
-      <h1 className="text-2xl font-semibold">Intercambio de Anime</h1>
-      <p className="text-foreground/70">
-        Aquí aparecerán la inscripción, tu asignación y el feed de reviews.
-      </p>
+      <h1 className="text-2xl font-semibold text-festive-red">Intercambio de Anime</h1>
+      <Suspense fallback={<div className="h-28 rounded-xl border" />}>
+        <CurrentEventCard />
+      </Suspense>
       <Suspense>
         <AdminShortcut />
       </Suspense>

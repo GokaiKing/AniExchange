@@ -42,7 +42,9 @@ describe.each(ZONES)("con TZ=%s", (zone) => {
 
   it("formatea en español con la zona explícita", () => {
     process.env.TZ = zone;
-    expect(formatAppDateTime(dayEndUtc("2026-12-10"))).toBe("10 dic, 23:59 hora de Hermosillo");
+    expect(formatAppDateTime(dayEndUtc("2026-12-10"))).toBe(
+      "10 dic, 23:59 (horario del vendehumo del admin)",
+    );
     expect(formatAppDate(dayStartUtc("2026-12-10"))).toBe("10 dic 2026");
   });
 });

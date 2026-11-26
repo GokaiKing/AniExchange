@@ -207,3 +207,23 @@ export function parseReminderDays(text: string): number[] | null {
   if (parts.some((part) => !/^\d+$/.test(part))) return null;
   return parts.map(Number).sort((a, b) => b - a);
 }
+
+/**
+ * ¿La fase acepta acciones de usuarios ahora mismo?
+ * Se decide por fechas (no solo por `status`) para que la fase cierre a tiempo
+ * aunque el tick todavía no haya corrido (evaluación perezosa, spec §15).
+ */
+export function isPhaseActive(
+  phase: { enabled: boolean; status: PhaseStatus; startsAt: Date; endsAt: Date },
+  event: { paused: boolean; archived: boolean },
+  now: Date,
+): boolean {
+  return (
+    !event.paused &&
+    !event.archived &&
+    phase.enabled &&
+    phase.status !== "closed" &&
+    phase.startsAt.getTime() <= now.getTime() &&
+    now.getTime() <= phase.endsAt.getTime()
+  );
+}

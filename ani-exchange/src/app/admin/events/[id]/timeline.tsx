@@ -2,14 +2,8 @@ import type { PhaseRow } from "@/server/events";
 import { formatAppDate } from "@/lib/dates";
 import { PHASE_LABEL } from "@/server/phases";
 
-const COLORS = [
-  "bg-sky-500",
-  "bg-violet-500",
-  "bg-amber-500",
-  "bg-emerald-500",
-  "bg-rose-500",
-  "bg-fuchsia-500",
-];
+// Alterna rojo y verde navideños.
+const COLORS = ["bg-festive-red", "bg-festive-green"];
 
 /** Vista previa de las fases en una línea de tiempo horizontal. */
 export function Timeline({ phases, now }: { phases: PhaseRow[]; now: Date }) {

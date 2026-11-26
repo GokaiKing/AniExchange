@@ -20,7 +20,7 @@ export type EditorRow = PhaseInput & {
   label: string;
   status: PhaseStatus;
   onMissOptions: { value: string; label: string }[];
-  /** Texto ya formateado en el servidor, p. ej. "10 dic, 23:59 hora de Hermosillo". */
+  /** Texto ya formateado en el servidor, p. ej. "10 dic, 23:59 (horario del vendehumo del admin)". */
   endsAtLabel: string;
 };
 
