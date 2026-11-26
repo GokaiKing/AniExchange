@@ -2,6 +2,7 @@
  * Reglas de propuestas (spec §11 + decisiones del admin, nov 2026). Puras.
  */
 import type { ListStatus, Media } from "@/lib/anime";
+import { yearTagMatches } from "@/lib/year-tags";
 
 export const MAX_PROPOSALS = 3;
 export const ALLOWED_FORMATS = ["TV", "ONA"] as const;
@@ -64,6 +65,12 @@ export function checkMedia(media: Media, rules: ReceiverRules): RuleCheck {
   }
 
   for (const banned of rules.bannedTags) {
+    const byYear = yearTagMatches(banned, media.year);
+    if (byYear !== null) {
+      if (media.year === null) warnings.push(`No se sabe el año de estreno (tiene baneado "${banned}")`);
+      else if (byYear) errors.push(`Es de ${media.year} (tag baneado "${banned}")`);
+      continue;
+    }
     if (media.genres.includes(banned)) {
       errors.push(`Tiene el género baneado "${banned}"`);
       continue;
@@ -88,6 +95,7 @@ export function missesPreferred(media: Media, allowedTags: readonly string[]): b
   if (allowedTags.length === 0) return false;
   return !allowedTags.some(
     (wanted) =>
+      yearTagMatches(wanted, media.year) === true ||
       media.genres.includes(wanted) ||
       media.tags.some((t) => t.name === wanted && t.rank >= BANNED_TAG_MIN_RANK),
   );

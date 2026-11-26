@@ -23,6 +23,7 @@ const anime = (id: number, patch: Partial<Media> = {}): Media => ({
   status: "FINISHED",
   episodes: 12,
   duration: 24,
+  year: 2015,
   isAdult: false,
   genres: ["Action"],
   tags: [],

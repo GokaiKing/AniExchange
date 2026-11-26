@@ -33,6 +33,8 @@ export type Media = {
   episodes: number | null;
   /** Minutos promedio por episodio. */
   duration: number | null;
+  /** Año de estreno. */
+  year: number | null;
   isAdult: boolean;
   genres: string[];
   tags: { name: string; rank: number }[];
@@ -41,7 +43,8 @@ export type Media = {
 };
 
 const MEDIA_FIELDS = /* GraphQL */ `
-  id idMal format status episodes duration isAdult genres
+  id idMal format status episodes duration isAdult genres seasonYear
+  startDate { year }
   tags { name rank }
   title { userPreferred }
   coverImage { large }
@@ -55,6 +58,8 @@ type RawMedia = {
   status: string | null;
   episodes: number | null;
   duration: number | null;
+  seasonYear: number | null;
+  startDate: { year: number | null } | null;
   isAdult: boolean | null;
   genres: string[] | null;
   tags: { name: string; rank: number | null }[] | null;
@@ -72,6 +77,7 @@ function toMedia(raw: RawMedia): Media {
     status: raw.status,
     episodes: raw.episodes,
     duration: raw.duration,
+    year: raw.seasonYear ?? raw.startDate?.year ?? null,
     isAdult: Boolean(raw.isAdult),
     genres: raw.genres ?? [],
     tags: (raw.tags ?? []).map((t) => ({ name: t.name, rank: t.rank ?? 0 })),

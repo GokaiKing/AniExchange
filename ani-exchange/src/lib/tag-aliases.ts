@@ -3,6 +3,8 @@
  * de AniList, y comparación sin mayúsculas, apóstrofos ni espacios.
  */
 
+import { YEAR_TAG_ALIASES } from "./year-tags";
+
 const BL = "Boys' Love";
 const GL = "Yuri";
 
@@ -53,6 +55,8 @@ const ALIASES: Record<string, string> = {
   scifi: "Sci-Fi",
   sliceoflife: "Slice of Life",
   sol: "Slice of Life",
+  // Año de estreno: "antes de 2010", "2010+", "después de 2015"…
+  ...YEAR_TAG_ALIASES,
 };
 
 /** Alias que se muestran como pista en el autocompletado. */
@@ -77,7 +81,7 @@ export function resolveTag(input: string, names: readonly string[]): string | nu
   if (!key) return null;
   const direct = names.find((name) => normalizeTag(name) === key);
   if (direct) return direct;
-  const alias = ALIASES[key.replace(/\+/g, "")];
+  const alias = ALIASES[key] ?? ALIASES[key.replace(/\+/g, "")];
   return alias && names.includes(alias) ? alias : null;
 }
 
@@ -95,8 +99,8 @@ export function searchTags(query: string, names: readonly string[], limit = 8): 
   const aliasPrefix: string[] = [];
   for (const [alias, target] of Object.entries(ALIASES)) {
     if (!available.has(target)) continue;
-    if (alias === aliasQuery) exactAlias.push(target);
-    else if (alias.startsWith(aliasQuery)) aliasPrefix.push(target);
+    if (alias === q || alias === aliasQuery) exactAlias.push(target);
+    else if (alias.startsWith(q) || alias.startsWith(aliasQuery)) aliasPrefix.push(target);
   }
   const starts: string[] = [];
   const contains: string[] = [];

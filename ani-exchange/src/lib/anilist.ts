@@ -1,5 +1,7 @@
 /** Cliente mínimo de AniList GraphQL (sin key). */
 
+import { YEAR_TAG_CATEGORY, YEAR_TAGS } from "./year-tags";
+
 export const ANILIST_ENDPOINT = "https://graphql.anilist.co";
 const TIMEOUT_MS = 8000;
 
@@ -80,5 +82,7 @@ export async function fetchTagCatalog(fetchFn: FetchFn = fetch): Promise<TagOpti
     .map((tag) => ({ name: tag.name, category: tag.category ?? "Otros" }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  return [...genres, ...tags];
+  // Tags de año (no existen en AniList; se validan contra el año de estreno).
+  const years: TagOption[] = YEAR_TAGS.map((t) => ({ name: t.name, category: YEAR_TAG_CATEGORY }));
+  return [...genres, ...years, ...tags];
 }

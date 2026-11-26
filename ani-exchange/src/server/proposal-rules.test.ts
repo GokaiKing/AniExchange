@@ -10,6 +10,7 @@ const bebop: Media = {
   status: "FINISHED",
   episodes: 26,
   duration: 24,
+  year: 1998,
   isAdult: false,
   genres: ["Action", "Sci-Fi"],
   tags: [
@@ -111,5 +112,26 @@ describe("missesPreferred", () => {
     expect(missesPreferred(bebop, ["Gore"])).toBe(true); // tag 15%: no cuenta
     expect(missesPreferred(bebop, ["Romance", "Isekai"])).toBe(true);
     expect(missesPreferred(bebop, ["Romance", "Action"])).toBe(false); // basta uno
+  });
+});
+
+describe("tags de año", () => {
+  it("baneado: bloquea si el año de estreno cae en el rango", () => {
+    expect(errors({}, { bannedTags: ["Pre-2010"] })[0]).toMatch(/Es de 1998 \(tag baneado "Pre-2010"\)/);
+    expect(errors({ year: 2012 }, { bannedTags: ["Pre-2010"] })).toEqual([]);
+    expect(errors({ year: 2021 }, { bannedTags: ["Post-2020"] })).toHaveLength(1);
+    expect(errors({ year: 2020 }, { bannedTags: ["Post-2020"] })).toHaveLength(1); // incluye 2020
+  });
+
+  it("sin año conocido solo avisa", () => {
+    const check = checkMedia({ ...bebop, year: null }, { ...rules, bannedTags: ["Pre-2010"] });
+    expect(check.errors).toEqual([]);
+    expect(check.warnings[0]).toMatch(/No se sabe el año/);
+  });
+
+  it("preferido: cuenta para la pastilla", () => {
+    expect(missesPreferred(bebop, ["Pre-2000"])).toBe(false); // 1998
+    expect(missesPreferred({ ...bebop, year: 2016 }, ["Pre-2000"])).toBe(true);
+    expect(missesPreferred({ ...bebop, year: 2016 }, ["Pre-2000", "Post-2015"])).toBe(false);
   });
 });

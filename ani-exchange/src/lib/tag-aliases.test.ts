@@ -68,3 +68,21 @@ describe("searchTags", () => {
     expect(searchTags("", names)).toEqual([]);
   });
 });
+
+describe("alias de año", () => {
+  const withYears = [...names, "Pre-2010", "Post-2010", "Post-2020"];
+  it.each([
+    ["pre 2010", "Pre-2010"],
+    ["antes de 2010", "Pre-2010"],
+    ["2010+", "Post-2010"],
+    ["después de 2020", "Post-2020"],
+    ["post-2010", "Post-2010"],
+  ])("%j → %s", (input, expected) => {
+    expect(resolveTag(input, withYears)).toBe(expected);
+  });
+
+  it("aparecen en las sugerencias", () => {
+    expect(searchTags("pre 20", withYears)).toContain("Pre-2010");
+    expect(searchTags("antes", withYears)).toContain("Pre-2010");
+  });
+});

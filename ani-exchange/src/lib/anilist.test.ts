@@ -18,12 +18,15 @@ describe("fetchTagCatalog", () => {
         }),
       )) as FetchFn;
 
-    expect(await fetchTagCatalog(fetchFn)).toEqual([
+    const catalog = await fetchTagCatalog(fetchFn);
+    expect(catalog.filter((t) => t.category !== "Año de estreno")).toEqual([
       { name: "Action", category: "Género" },
       { name: "Romance", category: "Género" },
       { name: "4-koma", category: "Technical" },
       { name: "Isekai", category: "Theme-Fantasy" },
     ]);
+    // Más los tags de año, que no existen en AniList.
+    expect(catalog.map((t) => t.name)).toContain("Pre-2010");
   });
 
   it("falla con mensaje claro si AniList no responde datos", async () => {
