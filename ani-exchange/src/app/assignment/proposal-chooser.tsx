@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleCheck } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { chooseProposalAction, type ProposalActionState } from "./actions";
@@ -50,7 +51,11 @@ export function ProposalChooser({ proposals, editable }: { proposals: ChooserPro
               <span className="block text-xs text-muted-foreground">{p.episodes ?? "?"} episodios</span>
               {p.chosen && (
                 <span className="block text-xs font-medium text-success">
-                  {p.autoChosen ? "Elegida automáticamente" : "Tu elección ✓"}
+                  {p.autoChosen ? "Elegida automáticamente" : (
+                    <span className="inline-flex items-center gap-1">
+                      <CircleCheck className="size-3" /> Tu elección
+                    </span>
+                  )}
                 </span>
               )}
             </span>

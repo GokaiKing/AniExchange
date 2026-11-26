@@ -1,3 +1,4 @@
+import { Lock, PartyPopper } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AppDateTime } from "@/components/app-date-time";
@@ -24,9 +25,9 @@ async function RevealContent() {
     const reveal = current.phases.find((p) => p.key === "reveal");
     return (
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">Reveal · {current.event.name}</h1>
+        <h1 className="text-2xl font-bold">Reveal · {current.event.name}</h1>
         <p className="text-muted-foreground">
-          🤫 Todavía es secreto.
+          <Lock className="inline size-[1em] shrink-0 align-[-0.125em]" /> Todavía es secreto.
           {reveal?.enabled && (
             <>
               {" "}
@@ -42,7 +43,9 @@ async function RevealContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-festive-red">🎉 Reveal · {current.event.name}</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gold">
+          <PartyPopper className="size-6" /> Reveal · {current.event.name}
+        </h1>
         <p className="text-sm text-muted-foreground">Quién le regaló qué a quién, en el orden del ciclo.</p>
       </div>
       <RevealPairs pairs={pairs} />

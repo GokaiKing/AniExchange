@@ -1,3 +1,4 @@
+import { Gift, TriangleAlert } from "lucide-react";
 import { ReviewImages } from "@/components/review-images";
 import { ReviewMarkdown } from "@/components/review-markdown";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +33,8 @@ function FeedCard({ item }: { item: FeedItem }) {
               Review de <span className="font-medium text-foreground">{item.reviewer.name}</span>
               {item.giver && (
                 <>
-                  {" · "}🎁 se lo regaló <span className="font-medium text-festive-red">{item.giver.name}</span>
+                  {" · "}
+                  <Gift className="inline size-[1em] shrink-0 align-[-0.125em]" /> se lo regaló <span className="font-medium text-gold">{item.giver.name}</span>
                 </>
               )}
               {" · "}
@@ -49,7 +51,9 @@ function FeedCard({ item }: { item: FeedItem }) {
           </p>
           {item.containsSpoilers ? (
             <details className="rounded-md border border-festive-red/40 px-3 py-2">
-              <summary className="cursor-pointer text-sm text-festive-red">⚠ Contiene spoilers: mostrar review</summary>
+              <summary className="cursor-pointer text-sm text-warning">
+                <TriangleAlert className="inline size-[1em] shrink-0 align-[-0.125em]" /> Contiene spoilers: mostrar review
+              </summary>
               <div className="space-y-2 pt-2">
                 <ReviewMarkdown text={item.reviewText} />
                 <ReviewImages images={item.images} />
@@ -81,7 +85,7 @@ export async function ReviewFeed() {
   const items = await listFeed(db, current.event.id, { revealed: isRevealed(current.phases) });
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold">Reviews</h2>
+      <h2 className="text-lg font-bold">Reviews</h2>
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">Todavía no hay reviews. Aparecerán aquí cuando la gente termine su anime.</p>
       ) : (

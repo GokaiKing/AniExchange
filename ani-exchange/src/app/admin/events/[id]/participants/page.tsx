@@ -1,3 +1,4 @@
+import { CircleCheck, CircleX } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -47,7 +48,7 @@ async function ParticipantsContent({ params }: { params: PageProps<"/admin/event
         <Link href={isSuperadmin ? `/admin/events/${event.id}` : "/admin"} className="text-sm text-muted-foreground hover:underline">
           ← {isSuperadmin ? event.name : "Panel"}
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Participantes · {event.name}</h1>
+        <h1 className="mt-2 text-2xl font-bold">Participantes · {event.name}</h1>
         <p className="text-sm text-muted-foreground">
           {counts.active} activos · {counts.no_show} no participaron · {counts.withdrawn} retirados
           {drawn ? " · sorteo hecho" : " · sin sorteo"}
@@ -112,9 +113,13 @@ async function ParticipantsContent({ params }: { params: PageProps<"/admin/event
                       {p.finished === null ? (
                         <span className="text-muted-foreground">—</span>
                       ) : p.finished ? (
-                        <span className="text-success">✓ sí</span>
+                        <span className="inline-flex items-center gap-1 text-success">
+                          <CircleCheck className="size-3.5" /> sí
+                        </span>
                       ) : (
-                        <span className="font-medium text-destructive">❌ no</span>
+                        <span className="inline-flex items-center gap-1 font-medium text-destructive">
+                          <CircleX className="size-3.5" /> no
+                        </span>
                       )}
                     </TableCell>
                   )}

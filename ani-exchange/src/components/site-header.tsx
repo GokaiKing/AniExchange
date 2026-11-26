@@ -1,8 +1,9 @@
-import { Gift, ShieldCheck } from "lucide-react";
+import { Gift } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { SignInButton, SignOutButton } from "@/components/auth-buttons";
+import { SignInButton } from "@/components/auth-buttons";
 import { buttonVariants } from "@/components/ui/button";
+import { UserDropdown } from "@/components/user-dropdown";
 import { getSessionUser } from "@/lib/authz";
 import { hasRole } from "@/lib/roles";
 
@@ -12,35 +13,25 @@ async function UserMenu() {
   const user = await getSessionUser();
   if (!user) return <SignInButton />;
 
-  const roleLabel = ROLE_LABEL[user.role];
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 sm:gap-3">
       <Link href="/assignment" className={buttonVariants({ size: "sm" })}>
         <Gift data-icon="inline-start" />
         Mi asignación
       </Link>
-      {hasRole(user.role, "admin") && (
-        <Link href="/admin" className={buttonVariants({ variant: "festive", size: "sm" })}>
-          <ShieldCheck data-icon="inline-start" />
-          Panel
-        </Link>
-      )}
-      {user.image && (
-        // eslint-disable-next-line @next/next/no-img-element -- avatar externo de Discord
-        <img src={user.image} alt="" width={28} height={28} className="rounded-full" />
-      )}
-      <span className="text-sm font-medium">{user.name}</span>
-      {roleLabel && (
-        <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">{roleLabel}</span>
-      )}
-      <SignOutButton />
+      <UserDropdown
+        name={user.name}
+        image={user.image}
+        roleLabel={ROLE_LABEL[user.role]}
+        canOpenPanel={hasRole(user.role, "admin")}
+      />
     </div>
   );
 }
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/55 shadow-[inset_0_-1px_0_0_var(--glass-highlight)] backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-black/40 bg-linear-to-b from-brick/95 to-brick-deep/95 shadow-[inset_0_1px_0_0_oklch(1_0_0/0.04),0_6px_18px_-6px_oklch(0_0_0/0.7)] backdrop-blur-xl">
       <div className="festive-stripe h-1.5" aria-hidden />
       <div className="flex items-center justify-between px-6 py-3">
         <Link href="/" aria-label="AniExchange: inicio" className="inline-flex shrink-0 flex-col items-end leading-none">

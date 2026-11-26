@@ -38,7 +38,7 @@ async function RegisterContent({ params }: { params: PageProps<"/events/[id]/reg
       <Link href="/" className="text-sm text-muted-foreground hover:underline">
         ← Inicio
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold">Inscripción · {event.name}</h1>
+      <h1 className="mt-2 text-2xl font-bold">Inscripción · {event.name}</h1>
       <p className="text-sm text-muted-foreground">
         {open ? "Cierra" : phase.endsAt < now ? "Cerró" : "Abre"} el{" "}
         <AppDateTime date={open || phase.endsAt < now ? phase.endsAt : phase.startsAt} />

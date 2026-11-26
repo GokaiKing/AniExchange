@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { BackgroundMusic } from "@/components/background-music";
-import { BokehLights } from "@/components/bokeh-lights";
 import { SiteHeader } from "@/components/site-header";
 import { Snowfall } from "@/components/snowfall";
 import { Toaster } from "@/components/ui/sonner";
@@ -29,11 +28,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="relative isolate min-h-full flex flex-col">
-        <BokehLights />
         <Snowfall />
         <SiteHeader />
         <main className="flex-1 px-6 py-8">{children}</main>
-        <Toaster position="bottom-right" />
+        <Toaster position="top-right" offset={{ top: 88, right: 16 }} />
+        {/* eslint-disable-next-line @next/next/no-img-element -- decoración local, sin optimización de Vercel */}
+        <img
+          src="/mascot.png"
+          alt=""
+          aria-hidden
+          width={400}
+          height={436}
+          className="pointer-events-none fixed right-2 bottom-[max(0.25rem,env(safe-area-inset-bottom))] z-30 w-32 select-none drop-shadow-[0_4px_12px_oklch(0_0_0/0.5)] sm:w-48"
+        />
         <BackgroundMusic />
       </body>
     </html>

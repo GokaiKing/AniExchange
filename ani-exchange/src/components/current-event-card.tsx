@@ -1,3 +1,4 @@
+import { CircleCheck, PartyPopper } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +43,9 @@ export async function CurrentEventCard() {
       return (
         <Card className="border-t-4 border-t-festive-red">
           <CardHeader>
-            <CardTitle>🎉 Reveal · {event.name}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <PartyPopper className="size-5" /> Reveal · {event.name}
+            </CardTitle>
             <CardDescription>Entra con Discord para ver quién le regaló qué a quién.</CardDescription>
           </CardHeader>
         </Card>
@@ -52,7 +55,9 @@ export async function CurrentEventCard() {
     return (
       <section className="space-y-3">
         <div>
-          <h2 className="text-xl font-semibold text-festive-red">🎉 Reveal · {event.name}</h2>
+          <h2 className="flex items-center gap-2 text-xl font-bold text-gold">
+            <PartyPopper className="size-5" /> Reveal · {event.name}
+          </h2>
           <p className="text-sm text-muted-foreground">Quién le regaló qué a quién, en el orden del ciclo.</p>
         </div>
         <RevealPairs pairs={pairs} />
@@ -95,7 +100,11 @@ export async function CurrentEventCard() {
         <span className="text-sm text-muted-foreground">
           {count} {count === 1 ? "inscrito" : "inscritos"}
         </span>
-        {registered && <span className="text-sm font-medium text-success">Estás inscrito ✓</span>}
+        {registered && (
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-success">
+            <CircleCheck className="size-4" /> Estás inscrito
+          </span>
+        )}
         {open &&
           (user ? (
             <Link

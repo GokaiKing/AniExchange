@@ -1,3 +1,4 @@
+import { Lock } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -35,9 +36,9 @@ async function PairingsContent({ params }: { params: PageProps<"/admin/events/[i
       <Link href={`/admin/events/${id}`} className="text-sm text-muted-foreground hover:underline">
         ← Edición
       </Link>
-      <h1 className="text-2xl font-semibold">Emparejamientos</h1>
+      <h1 className="text-2xl font-bold">Emparejamientos</h1>
       <p className="rounded-md border border-festive-red/40 bg-accent px-3 py-2 text-sm text-accent-foreground">
-        🤫 Información secreta hasta el reveal. Esta consulta quedó registrada en la auditoría.
+        <Lock className="inline size-[1em] shrink-0 align-[-0.125em]" /> Información secreta hasta el reveal. Esta consulta quedó registrada en la auditoría.
       </p>
       <div className="overflow-x-auto">
         <Table>

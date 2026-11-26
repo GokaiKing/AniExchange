@@ -1,3 +1,4 @@
+import { Gift, Lock } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AppDateTime } from "@/components/app-date-time";
@@ -93,7 +94,9 @@ function GiverCard({ view, children }: { view: GiverView; children: React.ReactN
           <p className="mb-2 font-medium">Tus propuestas</p>
           {children}
         </div>
-        <p className="text-xs text-muted-foreground">🤫 Es secreto: no le digas a nadie a quién te tocó.</p>
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Lock className="size-3" /> Es secreto: no le digas a nadie a quién te tocó.
+        </p>
       </CardContent>
     </Card>
   );
@@ -107,7 +110,7 @@ function ReceiverCard({ view, children }: { view: ReceiverView; children?: React
         <CardDescription>
           {view.giver ? (
             <>
-              🎁 Te lo regaló <span className="font-medium text-festive-red">{view.giver.name}</span>.
+              <Gift className="inline size-[1em] shrink-0 align-[-0.125em]" /> Te lo regaló <span className="font-medium text-gold">{view.giver.name}</span>.
             </>
           ) : (
             "Alguien del server te va a proponer hasta 3 animes. No sabrás quién hasta el reveal."
@@ -167,7 +170,7 @@ async function AssignmentContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Mi asignación</h1>
+        <h1 className="text-2xl font-bold">Mi asignación</h1>
         <p className="text-sm text-muted-foreground">{view.event.name}</p>
       </div>
 

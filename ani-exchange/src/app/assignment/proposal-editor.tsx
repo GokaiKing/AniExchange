@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleCheck, TriangleAlert } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -79,11 +80,15 @@ export function ProposalEditor({ proposals, preferredTags, max, editable, showCh
                 <p className="text-xs text-muted-foreground">
                   {p.episodes ?? "?"} episodios
                   {p.autoAdded && " · agregada automáticamente"}
-                  {showChosen && p.chosen && <span className="ml-1 font-medium text-success">· la eligió ✓</span>}
+                  {showChosen && p.chosen && (
+                    <span className="ml-1 inline-flex items-center gap-1 font-medium text-success">
+                      · la eligió <CircleCheck className="size-3" />
+                    </span>
+                  )}
                 </p>
                 {p.warnings.map((w) => (
-                  <p key={w} className="text-xs text-festive-red">
-                    ⚠ {w}
+                  <p key={w} className="text-xs text-warning">
+                    <TriangleAlert className="inline size-[1em] shrink-0 align-[-0.125em]" /> {w}
                   </p>
                 ))}
               </div>

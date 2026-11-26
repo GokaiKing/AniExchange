@@ -24,7 +24,7 @@ async function EventsList() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Ediciones</h1>
+        <h1 className="text-2xl font-bold">Ediciones</h1>
         <NewEventDialog
           defaultYear={events.length > 0 ? Math.max(currentYear, events[0].year + 1) : currentYear}
           defaultStartDate={today}

@@ -9,6 +9,9 @@
   --color-festive-green: var(--festive-green);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-gold: var(--gold);
+  --color-brick: var(--brick);
+  --color-brick-deep: var(--brick-deep);
   --color-ice: var(--ice);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -91,6 +94,10 @@
   --festive-green: oklch(0.48 0.12 155);
   --success: oklch(0.5 0.13 155);
   --warning: oklch(0.68 0.15 75);
+  --gold: oklch(0.62 0.13 80);
+  --sweater-red: #d2333f;
+  --brick: color-mix(in oklch, var(--sweater-red) 80%, black);
+  --brick-deep: color-mix(in oklch, var(--sweater-red) 55%, black);
   --ice: oklch(0.6 0.1 220);
   --glass-highlight: oklch(1 0 0 / 0.5);
   --glass-shadow: oklch(0.3 0.05 250 / 0.15);
@@ -100,9 +107,9 @@
   color-scheme: dark;
   --background: oklch(0.085 0.012 255);
   --foreground: oklch(0.97 0.012 230);
-  --card: oklch(0.5 0.06 232 / 0.2);
+  --card: oklch(0.165 0.008 255 / 0.85);
   --card-foreground: oklch(0.97 0.012 230);
-  --popover: oklch(0.22 0.045 248 / 0.94);
+  --popover: oklch(0.17 0.008 255 / 0.96);
   --popover-foreground: oklch(0.97 0.012 230);
   --primary: oklch(0.68 0.14 155);
   --primary-foreground: oklch(0.2 0.04 155);
@@ -133,9 +140,15 @@
   --festive-green: oklch(0.68 0.14 155);
   --success: oklch(0.72 0.15 155);
   --warning: oklch(0.83 0.15 85);
+  /* Texto destacado: dorado, para que no se pierda contra el suéter rojo. */
+  --gold: oklch(0.76 0.14 80);
+  /* Header: el mismo rojo del patrón de suéter (public/sweater.svg), oscurecido. */
+  --sweater-red: #d2333f;
+  --brick: color-mix(in oklch, var(--sweater-red) 80%, black);
+  --brick-deep: color-mix(in oklch, var(--sweater-red) 55%, black);
   /* Hielo */
   --ice: oklch(0.86 0.09 212);
-  --glass-highlight: oklch(1 0 0 / 0.2);
+  --glass-highlight: oklch(1 0 0 / 0.09);
   --glass-shadow: oklch(0.08 0.04 255 / 0.55);
 }
 
@@ -145,7 +158,14 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Las luces van en <BokehLights /> (animadas). */
+    /* Suéter navideño tejido (public/sweater.svg) con una viñeta que oscurece
+       el centro para que el contenido se lea bien. */
+    background-image:
+      radial-gradient(ellipse 70% 60% at 50% 45%, oklch(0.085 0.012 255 / 0.7), transparent 75%),
+      url("/sweater.svg");
+    background-repeat: no-repeat, repeat;
+    background-attachment: fixed, scroll;
+    background-size: 100% 100%, 288px 201px;
   }
   html {
     @apply font-sans;
@@ -166,9 +186,9 @@
 @utility glass {
   background-color: var(--card);
   /* Brillo diagonal, como luz sobre una superficie de hielo. */
-  background-image: linear-gradient(135deg, oklch(1 0 0 / 0.12), oklch(1 0 0 / 0.03) 38%, transparent 65%);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  background-image: linear-gradient(135deg, oklch(1 0 0 / 0.05), oklch(1 0 0 / 0.015) 38%, transparent 65%);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
   box-shadow:
     inset 0 1px 0 0 var(--glass-highlight),
     0 10px 32px -14px var(--glass-shadow);
@@ -176,46 +196,7 @@
 
 /* Reflejo de superficie pulida (botones). El halo de color va en cada variante. */
 @utility gloss {
-  background-image: linear-gradient(to bottom, oklch(1 0 0 / 0.24), oklch(1 0 0 / 0.05) 55%, transparent);
-}
-
-/* Luces bokeh: disco suave con borde algo más brillante, como fuera de foco. */
-.bokeh {
-  position: absolute;
-  border-radius: 9999px;
-  translate: -50% -50%;
-  background: radial-gradient(
-    circle,
-    color-mix(in oklch, var(--bokeh-color) 55%, transparent) 0%,
-    color-mix(in oklch, var(--bokeh-color) 70%, transparent) 60%,
-    var(--bokeh-color) 67%,
-    transparent 71%
-  );
-  filter: blur(var(--bokeh-blur));
-  mix-blend-mode: screen;
-  opacity: var(--bokeh-min);
-  transform: rotate(var(--bokeh-rotate)) scaleX(var(--bokeh-stretch));
-  will-change: opacity, transform;
-  animation: bokeh-pulse var(--bokeh-duration) ease-in-out var(--bokeh-delay) infinite;
-}
-
-@keyframes bokeh-pulse {
-  0%,
-  100% {
-    opacity: var(--bokeh-min);
-    transform: rotate(var(--bokeh-rotate)) scaleX(var(--bokeh-stretch)) scale(0.94);
-  }
-  50% {
-    opacity: var(--bokeh-max);
-    transform: rotate(var(--bokeh-rotate)) scaleX(var(--bokeh-stretch)) scale(1.05);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bokeh {
-    animation: none;
-    opacity: calc((var(--bokeh-min) + var(--bokeh-max)) / 2);
-  }
+  background-image: linear-gradient(to bottom, oklch(1 0 0 / 0.05), transparent 60%);
 }
 
 /* Nieve: el exterior cae, el interior se mece. */

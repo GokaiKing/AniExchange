@@ -26,7 +26,7 @@ async function AdminHome() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Panel</h1>
+      <h1 className="text-2xl font-bold">Panel</h1>
       <div className="grid gap-4 sm:grid-cols-2">
         {current && (
           <PanelCard

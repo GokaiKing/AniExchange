@@ -62,7 +62,7 @@ async function AuditContent({ searchParams }: { searchParams: PageProps<"/admin/
         <Link href="/admin" className="text-sm text-muted-foreground hover:underline">
           ← Panel
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Auditoría</h1>
+        <h1 className="mt-2 text-2xl font-bold">Auditoría</h1>
         <p className="text-sm text-muted-foreground">{options.total} registros en total. Fechas en hora de Hermosillo.</p>
       </div>
 

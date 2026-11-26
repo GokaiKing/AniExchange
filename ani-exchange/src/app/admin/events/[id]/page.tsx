@@ -102,7 +102,7 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
         </Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold">{event.name}</h1>
+            <h1 className="text-2xl font-bold">{event.name}</h1>
             <EventFlagBadges paused={event.paused} archived={event.archived} />
           </div>
           <div className="flex flex-wrap gap-2">

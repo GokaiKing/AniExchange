@@ -30,11 +30,11 @@ async function AdminShortcut() {
     <div className="glass flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3">
       <span className="text-sm text-muted-foreground">Tienes acceso de {user.role}.</span>
       {hasRole(user.role, "superadmin") && (
-        <Link href="/admin/events" className={buttonVariants({ size: "sm" })}>
+        <Link href="/admin/events" className={buttonVariants({ variant: "gold", size: "sm" })}>
           Editar ediciones y fases
         </Link>
       )}
-      <Link href="/admin" className={buttonVariants({ variant: "outline", size: "sm" })}>
+      <Link href="/admin" className={buttonVariants({ variant: "gold", size: "sm" })}>
         Ir al panel
       </Link>
     </div>
@@ -47,7 +47,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
       <Suspense>
         <Notice searchParams={searchParams} />
       </Suspense>
-      <h1 className="text-2xl font-semibold text-festive-red">AniExchange</h1>
+      <h1 className="text-2xl font-bold text-gold">AniExchange</h1>
       <Suspense fallback={<div className="h-28 rounded-xl border" />}>
         <CurrentEventCard />
       </Suspense>
