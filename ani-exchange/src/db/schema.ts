@@ -314,6 +314,13 @@ export const notificationLog = pgTable(
   (t) => [index("notification_log_status_idx").on(t.status)],
 );
 
+/** Límite de peticiones de escritura (spec §16): ventana fija por clave. */
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  windowStart: tstz("window_start").notNull(),
+  count: integer("count").notNull(),
+});
+
 export const auditLog = pgTable(
   "audit_log",
   {

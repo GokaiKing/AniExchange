@@ -194,7 +194,7 @@ export async function updatePhases(
   });
 }
 
-export type EventFlags = { paused?: boolean; archived?: boolean; feedPublic?: boolean };
+export type EventFlags = { paused?: boolean; archived?: boolean; feedPublic?: boolean; adminCanSeePairings?: boolean };
 
 export async function setEventFlags(
   db: Database,
@@ -211,8 +211,18 @@ export async function setEventFlags(
       action: "event.flags.update",
       entity: "event",
       entityId: eventId,
-      before: { paused: before.paused, archived: before.archived, feedPublic: before.feedPublic },
-      after: { paused: after.paused, archived: after.archived, feedPublic: after.feedPublic },
+      before: {
+        paused: before.paused,
+        archived: before.archived,
+        feedPublic: before.feedPublic,
+        adminCanSeePairings: before.adminCanSeePairings,
+      },
+      after: {
+        paused: after.paused,
+        archived: after.archived,
+        feedPublic: after.feedPublic,
+        adminCanSeePairings: after.adminCanSeePairings,
+      },
     });
   });
 }

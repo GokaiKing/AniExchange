@@ -22,7 +22,7 @@ export function createTestDb() {
 
 export async function resetDb(db: Database) {
   await db.execute(sql`
-    truncate table audit_log, notification_log, evidence, proposals, assignments,
+    truncate table rate_limits, audit_log, notification_log, evidence_images, evidence, proposals, assignments,
       participants, event_phases, events, verification, account, session, "user"
     restart identity cascade
   `);

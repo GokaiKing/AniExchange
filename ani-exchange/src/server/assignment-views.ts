@@ -10,6 +10,7 @@ import type { Database } from "@/db";
 import { assignments, eventPhases, participants, proposals, user } from "@/db/schema";
 import type { Platform } from "@/lib/profiles";
 import { getCurrentEvent } from "./participants";
+import { giversByAssignment, isRevealed, type Person } from "./reveal";
 
 export type GiverView = {
   assignmentId: string;
@@ -31,6 +32,8 @@ export type ReceiverView = {
   assignmentId: string;
   proposalCount: number;
   selectionDeadline: Date | null;
+  /** Solo después del reveal. */
+  giver?: Person;
 };
 
 export type MyAssignmentView =
@@ -130,5 +133,9 @@ export async function getMyAssignmentView(db: Database, userId: string): Promise
     getGiverView(db, event.id, participant.id),
     getReceiverView(db, event.id, participant.id),
   ]);
+  if (asReceiver && isRevealed(current.phases)) {
+    const giver = (await giversByAssignment(db, [asReceiver.assignmentId])).get(asReceiver.assignmentId);
+    if (giver) asReceiver.giver = giver;
+  }
   return { state: "drawn", event, asGiver, asReceiver };
 }

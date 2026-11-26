@@ -11,6 +11,9 @@ import {
   registrationPhaseOf,
 } from "@/server/participants";
 import { isPhaseActive } from "@/server/phases";
+import { RevealPairs } from "@/components/reveal-pairs";
+import { canSeeFeed } from "@/server/evidence";
+import { isRevealed, revealSummary } from "@/server/reveal";
 import { ensureTicked } from "@/server/tick";
 
 /** Tarjeta del home con la edición vigente y el estado de inscripción del usuario. */
@@ -32,6 +35,30 @@ export async function CurrentEventCard() {
   }
 
   const { event, phases } = current;
+
+  // Tras el reveal, esta sección del home pasa a mostrar todos los pares.
+  if (isRevealed(phases)) {
+    if (!canSeeFeed(event, Boolean(user))) {
+      return (
+        <Card className="border-t-4 border-t-festive-red">
+          <CardHeader>
+            <CardTitle>🎉 Reveal · {event.name}</CardTitle>
+            <CardDescription>Entra con Discord para ver quién le regaló qué a quién.</CardDescription>
+          </CardHeader>
+        </Card>
+      );
+    }
+    const pairs = await revealSummary(db, event.id);
+    return (
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-xl font-semibold text-festive-red">🎉 Reveal · {event.name}</h2>
+          <p className="text-sm text-muted-foreground">Quién le regaló qué a quién, en el orden del ciclo.</p>
+        </div>
+        <RevealPairs pairs={pairs} />
+      </section>
+    );
+  }
   const phase = registrationPhaseOf(phases);
   const now = new Date();
   const open = isPhaseActive(phase, event, now);

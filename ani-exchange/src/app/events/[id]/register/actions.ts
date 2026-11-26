@@ -12,6 +12,7 @@ import {
   withdrawRegistration,
 } from "@/server/participants";
 import { getTagCatalog } from "@/server/tag-catalog";
+import { allowUserAction, RATE_LIMIT_MESSAGE } from "@/server/rate-limit";
 
 export type RegistrationState = {
   ok?: boolean;
@@ -28,6 +29,7 @@ export async function saveRegistrationAction(
   const user = await assertRole("user");
   if (!z.uuid().safeParse(eventId).success) return { error: "Edición inválida" };
 
+  if (!(await allowUserAction(getDb(), user.id, "registration"))) return { error: RATE_LIMIT_MESSAGE };
   const parsed = registrationSchema.safeParse(raw);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];

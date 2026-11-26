@@ -26,6 +26,7 @@ import {
   UPLOAD_CONTENT_TYPES,
 } from "@/lib/review-images";
 import type { BlobStore } from "./blob-store";
+import { giversByAssignment, type Person } from "./reveal";
 import { getCurrentEvent } from "./participants";
 import { isPhaseActive } from "./phases";
 
@@ -221,13 +222,23 @@ export type FeedItem = {
   containsSpoilers: boolean;
   images: ReviewImage[];
   createdAt: Date;
+  /** Solo después del reveal. */
+  giver?: Person;
 };
 
-/** Reviews de la edición, más recientes primero. Sin datos del giver. */
-export async function listFeed(db: Database, eventId: string): Promise<FeedItem[]> {
+/**
+ * Reviews de la edición, más recientes primero. El giver se agrega con una
+ * consulta aparte y SOLO si `revealed` es true.
+ */
+export async function listFeed(
+  db: Database,
+  eventId: string,
+  options: { revealed?: boolean } = {},
+): Promise<FeedItem[]> {
   const rows = await db
     .select({
       id: evidence.id,
+      assignmentId: evidence.assignmentId,
       reviewText: evidence.reviewText,
       rating: evidence.rating,
       trackerUrl: evidence.trackerUrl,
@@ -252,6 +263,12 @@ export async function listFeed(db: Database, eventId: string): Promise<FeedItem[
     db,
     rows.map((r) => r.id),
   );
+  const givers = options.revealed
+    ? await giversByAssignment(
+        db,
+        rows.map((r) => r.assignmentId),
+      )
+    : null;
   return rows.map((r) => ({
     id: r.id,
     anime: { title: r.title, episodes: r.episodes, sourceUrl: r.sourceUrl, coverUrl: r.coverUrl },
@@ -262,6 +279,7 @@ export async function listFeed(db: Database, eventId: string): Promise<FeedItem[
     containsSpoilers: r.containsSpoilers,
     images: images.get(r.id) ?? [],
     createdAt: r.createdAt,
+    ...(givers?.has(r.assignmentId) ? { giver: givers.get(r.assignmentId) } : {}),
   }));
 }
 

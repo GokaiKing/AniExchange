@@ -2,6 +2,7 @@ import { getDb } from "@/db";
 import { getSessionUser } from "@/lib/authz";
 import { canSeeFeed, listFeed } from "@/server/evidence";
 import { getCurrentEvent } from "@/server/participants";
+import { isRevealed } from "@/server/reveal";
 
 /** Feed de la edición vigente (spec §15). Sin datos del giver antes del reveal. */
 export async function GET(): Promise<Response> {
@@ -14,6 +15,6 @@ export async function GET(): Promise<Response> {
   }
   return Response.json({
     event: { id: current.event.id, name: current.event.name },
-    items: await listFeed(db, current.event.id),
+    items: await listFeed(db, current.event.id, { revealed: isRevealed(current.phases) }),
   });
 }

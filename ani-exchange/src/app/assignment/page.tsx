@@ -103,9 +103,15 @@ function ReceiverCard({ view, children }: { view: ReceiverView; children?: React
   return (
     <Card className="border-t-4 border-t-festive-red">
       <CardHeader>
-        <CardTitle>Lo que vas a recibir</CardTitle>
+        <CardTitle>{view.giver ? "Lo que recibiste" : "Lo que vas a recibir"}</CardTitle>
         <CardDescription>
-          Alguien del server te va a proponer hasta 3 animes. No sabrás quién hasta el reveal.
+          {view.giver ? (
+            <>
+              🎁 Te lo regaló <span className="font-medium text-festive-red">{view.giver.name}</span>.
+            </>
+          ) : (
+            "Alguien del server te va a proponer hasta 3 animes. No sabrás quién hasta el reveal."
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">

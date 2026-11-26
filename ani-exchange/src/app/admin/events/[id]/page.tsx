@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDb } from "@/db";
 import { requireRole } from "@/lib/authz";
@@ -26,7 +26,7 @@ function FlagButton({
   children,
 }: {
   eventId: string;
-  flag: "paused" | "archived" | "feedPublic";
+  flag: "paused" | "archived" | "feedPublic" | "adminCanSeePairings";
   value: boolean;
   children: React.ReactNode;
 }) {
@@ -69,6 +69,12 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
         : "La edición se pausó porque no había suficientes participantes para el sorteo. Extiende la fecha de inscripción y luego reanúdala.",
     );
   }
+  const disabled = phases.filter((p) => !p.enabled && p.status !== "closed");
+  if (disabled.length > 0) {
+    alerts.push(
+      `Fases desactivadas (se saltan): ${disabled.map((p) => PHASE_LABEL[p.key]).join(", ")}. Actívalas en la tabla de fases si no fue a propósito.`,
+    );
+  }
   if (current && current.status === "open" && !current.autoAdvance && current.endsAt < now) {
     alerts.push(`${PHASE_LABEL[current.key]} ya venció y espera avance manual.`);
   }
@@ -100,7 +106,10 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
             <h1 className="text-2xl font-semibold">{event.name}</h1>
             <EventFlagBadges paused={event.paused} archived={event.archived} />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/admin/events/${event.id}/participants`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Participantes
+            </Link>
             <FlagButton eventId={event.id} flag="feedPublic" value={!event.feedPublic}>
               {event.feedPublic ? "Hacer feed privado" : "Hacer feed público"}
             </FlagButton>
@@ -149,6 +158,27 @@ async function EventDetail({ params }: { params: PageProps<"/admin/events/[id]">
           />
         </CardContent>
       </Card>
+
+      {event.drawExecutedAt && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Emparejamientos</CardTitle>
+            <CardDescription>
+              Ocultos por defecto, también para ti. Si los activas, cada vez que los mires quedará en la auditoría.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center gap-2">
+            <FlagButton eventId={event.id} flag="adminCanSeePairings" value={!event.adminCanSeePairings}>
+              {event.adminCanSeePairings ? "Ocultar emparejamientos" : "Mostrar emparejamientos"}
+            </FlagButton>
+            {event.adminCanSeePairings && (
+              <Link href={`/admin/events/${event.id}/pairings`} className={buttonVariants({ size: "sm" })}>
+                Ver emparejamientos
+              </Link>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

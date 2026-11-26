@@ -11,6 +11,7 @@ import {
 import { addDays, todayAppDate } from "@/lib/dates";
 import { addParticipants, createTestDb, createUser, hasTestDb, resetDb } from "../../tests/db";
 import { createEvent } from "./events";
+import { validatePhasePlan } from "./phases";
 import {
   closePhaseNow,
   drawSummary,
@@ -275,5 +276,80 @@ describe.skipIf(!hasTestDb)("tick y sorteo (integración con Postgres)", () => {
       const event = await createEvent(db, null, { name: "E", year: 2026, startDate: today });
       await expect(redraw(db, adminId, event.id, { confirm: true })).rejects.toThrow(/Todavía no/);
     });
+  });
+});
+
+describe.skipIf(!hasTestDb)("reveal se adelanta al cerrar evidencia (integración con Postgres)", () => {
+  const { db, close } = hasTestDb ? createTestDb() : ({} as ReturnType<typeof createTestDb>);
+  const now = new Date();
+  const hour = 3600 * 1000;
+  let adminId: string;
+  let eventId: string;
+
+  beforeEach(async () => {
+    await resetDb(db);
+    adminId = (await createUser(db, { role: "superadmin" })).id;
+    const event = await createEvent(db, null, { name: "E", year: 2026, startDate: addDays(todayAppDate(now), -20) });
+    eventId = event.id;
+    await addParticipants(db, eventId, 3);
+    await runDueActions(db, now);
+    // Todo cerrado salvo Evidencia (abierta) y Reveal (pendiente, dentro de 5 días).
+    await db.update(eventPhases).set({ status: "closed" }).where(eq(eventPhases.eventId, eventId));
+    await db
+      .update(eventPhases)
+      .set({ status: "pending", startsAt: new Date(now.getTime() + 5 * 24 * hour), endsAt: new Date(now.getTime() + 10 * 24 * hour) })
+      .where(and(eq(eventPhases.eventId, eventId), eq(eventPhases.key, "reveal")));
+  });
+
+  afterAll(async () => {
+    await close?.();
+  });
+
+  const phase = async (key: "evidence" | "reveal") =>
+    (await db.select().from(eventPhases).where(and(eq(eventPhases.eventId, eventId), eq(eventPhases.key, key))))[0];
+  const setEvidence = (values: Partial<typeof eventPhases.$inferInsert>) =>
+    db.update(eventPhases).set(values).where(and(eq(eventPhases.eventId, eventId), eq(eventPhases.key, "evidence")));
+
+  it("al vencer Evidencia, el Reveal abre de inmediato", async () => {
+    await setEvidence({ status: "open", startsAt: new Date(now.getTime() - 48 * hour), endsAt: new Date(now.getTime() - hour) });
+    const actions = await runDueActions(db, now);
+    expect(actions.map((a) => `${a.type}${"phase" in a ? ":" + a.phase : ""}`)).toEqual([
+      "phase.close:evidence",
+      "phase.open:reveal",
+    ]);
+    expect((await phase("reveal")).startsAt.getTime()).toBe(now.getTime());
+  });
+
+  it("cerrar Evidencia a mano antes de tiempo también abre el Reveal y deja fechas válidas", async () => {
+    await setEvidence({ status: "open", startsAt: new Date(now.getTime() - 48 * hour), endsAt: new Date(now.getTime() + 48 * hour) });
+    const actions = await closePhaseNow(db, adminId, eventId, "evidence", now);
+    expect(actions).toContainEqual(expect.objectContaining({ type: "phase.open", phase: "reveal" }));
+
+    const evidence = await phase("evidence");
+    const reveal = await phase("reveal");
+    expect(evidence.endsAt.getTime()).toBeLessThan(reveal.startsAt.getTime());
+    expect(reveal.status).toBe("open");
+
+    // El plan resultante sigue pasando la validación del panel.
+    const all = await db.select().from(eventPhases).where(eq(eventPhases.eventId, eventId)).orderBy(asc(eventPhases.position));
+    const result = validatePhasePlan(
+      all.map((p) => ({
+        key: p.key,
+        enabled: p.enabled,
+        startsAt: p.startsAt,
+        endsAt: p.endsAt,
+        autoAdvance: p.autoAdvance,
+        onMiss: p.onMiss,
+        reminderDays: p.reminderDays,
+      })),
+    );
+    // (el traslape Evidencia↔Viendo viene del armado de esta prueba, no del adelanto)
+    expect(result.ok ? [] : result.errors.filter((e) => e.key === "reveal")).toEqual([]);
+  });
+
+  it("si Evidencia está desactivada, el Reveal espera su fecha", async () => {
+    await setEvidence({ enabled: false });
+    expect((await runDueActions(db, now)).some((a) => a.type === "phase.open")).toBe(false);
+    expect((await phase("reveal")).status).toBe("pending");
   });
 });

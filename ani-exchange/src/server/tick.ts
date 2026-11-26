@@ -26,6 +26,7 @@ import {
   enqueueAdminAlert,
   enqueueAssignmentDms,
   enqueueReminders,
+  enqueueRevealDms,
   processNotificationBatch,
   skipAssignmentDms,
 } from "./notifications";
@@ -194,6 +195,7 @@ async function openPhase(
 ): Promise<void> {
   await tx.update(eventPhases).set({ status: "open" }).where(eq(eventPhases.id, phase.id));
   phase.status = "open";
+  if (phase.key === "reveal") await enqueueRevealDms(tx, event.id);
   actions.push({ type: "phase.open", eventId: event.id, phase: phase.key });
 }
 
@@ -216,6 +218,7 @@ async function advance(
     if (!phase.enabled || phase.status === "closed") continue;
 
     if (phase.status === "pending") {
+      if (phase.startsAt > now && phase.key === "reveal") await pullRevealForward(tx, phases, phase, now);
       if (phase.startsAt > now) return;
       await openPhase(tx, event, phase, actions);
     }
@@ -227,6 +230,28 @@ async function advance(
     }
     if (!(await closePhase(tx, event, phase, null, now, actions, services))) return;
   }
+}
+
+/**
+ * Al cerrarse Evidencia, el Reveal se adelanta y abre en ese momento (decisión
+ * del admin, nov 2026). Las fechas guardadas se ajustan para que el plan siga
+ * siendo válido: Reveal empieza ahora y, si Evidencia se cerró antes de su
+ * fecha, su fin pasa a justo antes de ahora.
+ */
+async function pullRevealForward(tx: Transaction, phases: PhaseRow[], reveal: PhaseRow, now: Date) {
+  const evidencePhase = phases.find((p) => p.key === "evidence");
+  if (!evidencePhase || !evidencePhase.enabled || evidencePhase.status !== "closed") return;
+
+  if (evidencePhase.endsAt.getTime() >= now.getTime()) {
+    const endedAt = new Date(now.getTime() - 1);
+    await tx.update(eventPhases).set({ endsAt: endedAt }).where(eq(eventPhases.id, evidencePhase.id));
+    evidencePhase.endsAt = endedAt;
+  }
+  const values: { startsAt: Date; endsAt?: Date } = { startsAt: now };
+  if (reveal.endsAt.getTime() <= now.getTime()) values.endsAt = new Date(now.getTime() + 1);
+  await tx.update(eventPhases).set(values).where(eq(eventPhases.id, reveal.id));
+  reveal.startsAt = values.startsAt;
+  if (values.endsAt) reveal.endsAt = values.endsAt;
 }
 
 async function lockEvent(tx: Transaction, eventId: string) {

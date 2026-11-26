@@ -10,12 +10,14 @@ import { isBlobConfigured, vercelBlobStore } from "@/server/blob-store";
 import { defaultAnimeServices } from "@/server/anime-services";
 import { saveEvidence } from "@/server/evidence";
 import { addProposal, chooseProposal, removeProposal } from "@/server/proposals";
+import { allowUserAction, RATE_LIMIT_MESSAGE } from "@/server/rate-limit";
 
 export type ProposalActionState = { ok?: boolean; error?: string; warnings?: string[] };
 
 export async function addProposalAction(link: string): Promise<ProposalActionState> {
   const user = await assertRole("user");
   if (typeof link !== "string" || link.length > 500) return { error: "Link inválido" };
+  if (!(await allowUserAction(getDb(), user.id, "proposal"))) return { error: RATE_LIMIT_MESSAGE };
   const result = await addProposal(getDb(), {
     userId: user.id,
     link,
@@ -30,6 +32,7 @@ export async function addProposalAction(link: string): Promise<ProposalActionSta
 export async function removeProposalAction(proposalId: string): Promise<ProposalActionState> {
   const user = await assertRole("user");
   if (!z.uuid().safeParse(proposalId).success) return { error: "Propuesta inválida" };
+  if (!(await allowUserAction(getDb(), user.id, "proposal"))) return { error: RATE_LIMIT_MESSAGE };
   const result = await removeProposal(getDb(), { userId: user.id, proposalId, now: new Date() });
   if (!result.ok) return { error: result.error };
   refresh();
@@ -39,6 +42,7 @@ export async function removeProposalAction(proposalId: string): Promise<Proposal
 export async function chooseProposalAction(proposalId: string): Promise<ProposalActionState> {
   const user = await assertRole("user");
   if (!z.uuid().safeParse(proposalId).success) return { error: "Propuesta inválida" };
+  if (!(await allowUserAction(getDb(), user.id, "selection"))) return { error: RATE_LIMIT_MESSAGE };
   const result = await chooseProposal(getDb(), { userId: user.id, proposalId, now: new Date() });
   if (!result.ok) return { error: result.error };
   refresh();
@@ -52,6 +56,7 @@ export async function saveEvidenceAction(
   rawImages: ReviewImage[] = [],
 ): Promise<EvidenceActionState> {
   const user = await assertRole("user");
+  if (!(await allowUserAction(getDb(), user.id, "evidence"))) return { error: RATE_LIMIT_MESSAGE };
   const parsed = evidenceSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const images = reviewImagesSchema.safeParse(rawImages);

@@ -28,13 +28,17 @@ export type AssignmentMessageInput = {
   link: string;
   /** El sorteo se repitió: este mensaje reemplaza al anterior. */
   redraw: boolean;
+  /** Se reasignó porque alguien salió del ciclo. */
+  reassigned?: boolean;
 };
 
 export function assignmentMessage(input: AssignmentMessageInput): string {
   const lines = [
-    input.redraw
-      ? `⚠️ **Se repitió el sorteo de ${escapeMarkdown(input.eventName)}.** Ignora el mensaje anterior: esta es tu asignación vigente.`
-      : `🎁 **${escapeMarkdown(input.eventName)}**`,
+    input.reassigned
+      ? `⚠️ **Cambio en ${escapeMarkdown(input.eventName)}:** tu receptor anterior salió del intercambio, así que ahora le das a otra persona. Lo que habías propuesto ya no cuenta.`
+      : input.redraw
+        ? `⚠️ **Se repitió el sorteo de ${escapeMarkdown(input.eventName)}.** Ignora el mensaje anterior: esta es tu asignación vigente.`
+        : `🎁 **${escapeMarkdown(input.eventName)}**`,
     "",
     `Te tocó darle un anime a **${escapeMarkdown(input.receiverName)}**.`,
     `• Géneros/tags preferidos: ${list(input.allowedTags)}`,
@@ -72,6 +76,34 @@ export function reminderMessage(input: {
     `Cierra: ${deadlineLine(input.deadline)}`,
     input.link,
   ].join("\n");
+}
+
+export function revealMessage(input: {
+  eventName: string;
+  /** Lo que recibió: anime, quién se lo dio y si subió su review a tiempo. */
+  received: { title: string; giverName: string; finished: boolean } | null;
+  /** Lo que dio: a quién, qué anime y cómo le fue. */
+  gave: { receiverName: string; title: string | null; rating: number | null; reviewed: boolean } | null;
+  link: string;
+}): string {
+  const lines = [`🎉 **Reveal de ${escapeMarkdown(input.eventName)}**`, ""];
+  if (input.received) {
+    lines.push(
+      `🎁 **${escapeMarkdown(input.received.giverName)}** te regaló *${escapeMarkdown(input.received.title)}*` +
+        (input.received.finished ? "." : " ❌ y no lo terminaste a tiempo."),
+    );
+  }
+  if (input.gave) {
+    const anime = input.gave.title ? ` *${escapeMarkdown(input.gave.title)}*` : "";
+    const outcome = !input.gave.reviewed
+      ? "❌ no lo terminó"
+      : input.gave.rating !== null
+        ? `le puso ${input.gave.rating}/10`
+        : "ya dejó su review";
+    lines.push(`🎄 Tú le diste${anime} a **${escapeMarkdown(input.gave.receiverName)}** (${outcome}).`);
+  }
+  lines.push("", `Mira todos los pares: ${input.link}`);
+  return lines.join("\n");
 }
 
 const ON_MISS_TEXT: Record<string, string> = {

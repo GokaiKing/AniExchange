@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/authz";
 import { formatAppDate } from "@/lib/dates";
 import { canSeeFeed, type FeedItem, listFeed } from "@/server/evidence";
 import { getCurrentEvent } from "@/server/participants";
+import { isRevealed } from "@/server/reveal";
 
 function FeedCard({ item }: { item: FeedItem }) {
   return (
@@ -28,7 +29,14 @@ function FeedCard({ item }: { item: FeedItem }) {
               <img src={item.reviewer.image} alt="" width={18} height={18} className="rounded-full" />
             )}
             <span>
-              Review de <span className="font-medium text-foreground">{item.reviewer.name}</span> · {formatAppDate(item.createdAt)}
+              Review de <span className="font-medium text-foreground">{item.reviewer.name}</span>
+              {item.giver && (
+                <>
+                  {" · "}🎁 se lo regaló <span className="font-medium text-festive-red">{item.giver.name}</span>
+                </>
+              )}
+              {" · "}
+              {formatAppDate(item.createdAt)}
               {item.trackerUrl && (
                 <>
                   {" · "}
@@ -70,7 +78,7 @@ export async function ReviewFeed() {
     return <p className="text-sm text-muted-foreground">Entra con Discord para ver las reviews del intercambio.</p>;
   }
 
-  const items = await listFeed(db, current.event.id);
+  const items = await listFeed(db, current.event.id, { revealed: isRevealed(current.phases) });
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-semibold">Reviews</h2>

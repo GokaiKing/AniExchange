@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dayEndUtc } from "@/lib/dates";
-import { assignmentMessage, drawInsufficientMessage, reminderMessage } from "./messages";
+import { assignmentMessage, drawInsufficientMessage, reminderMessage, revealMessage } from "./messages";
 
 const base = {
   eventName: "Intercambio 2026",
@@ -51,5 +51,29 @@ describe("otros mensajes", () => {
     expect(
       drawInsufficientMessage({ eventName: "E", participants: 2, minimum: 3, link: "https://x" }),
     ).toContain("solo hay 2 participantes");
+  });
+});
+
+describe("revealMessage", () => {
+  it("marca cuando no se terminó el anime, de ambos lados", () => {
+    const text = revealMessage({
+      eventName: "Intercambio",
+      received: { title: "Toradora!", giverName: "Ana", finished: false },
+      gave: { receiverName: "Beto", title: "Mob Psycho 100", rating: null, reviewed: false },
+      link: "https://ejemplo.test/reveal",
+    });
+    expect(text).toContain("**Ana** te regaló *Toradora!* ❌ y no lo terminaste a tiempo.");
+    expect(text).toContain("a **Beto** (❌ no lo terminó)");
+  });
+
+  it("sin marca cuando sí se terminó", () => {
+    const text = revealMessage({
+      eventName: "Intercambio",
+      received: { title: "Toradora!", giverName: "Ana", finished: true },
+      gave: { receiverName: "Beto", title: "Mob Psycho 100", rating: 8.5, reviewed: true },
+      link: "https://ejemplo.test/reveal",
+    });
+    expect(text).not.toContain("❌");
+    expect(text).toContain("le puso 8.5/10");
   });
 });

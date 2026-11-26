@@ -27,6 +27,7 @@ import {
   drawInsufficientMessage,
   hasReminderText,
   onMissAlertMessage,
+  revealMessage,
   reminderMessage,
 } from "./messages";
 
@@ -37,7 +38,7 @@ type Executor = Database | Transaction;
 
 export type NotificationRow = typeof notificationLog.$inferSelect;
 
-export type AssignmentPayload = { assignmentId: string; redraw?: boolean };
+export type AssignmentPayload = { assignmentId: string; redraw?: boolean; reassigned?: boolean };
 export type ReminderPayload = { phaseId: string; phase: PhaseKey; days: number };
 export type DrawInsufficientPayload = { participants: number };
 export type OnMissAlertPayload = { type: "on_miss"; phase: PhaseKey; policy: string; count: number };
@@ -51,7 +52,7 @@ export async function enqueueAssignmentDms(
   tx: Transaction,
   eventId: string,
   assignmentIds: string[],
-  options: { redraw?: boolean } = {},
+  options: { redraw?: boolean; reassigned?: boolean } = {},
 ): Promise<void> {
   if (assignmentIds.length === 0) return;
   const rows = await tx
@@ -66,7 +67,11 @@ export async function enqueueAssignmentDms(
         eventId,
         userId: row.userId,
         kind: "assignment",
-        payload: { assignmentId: row.assignmentId, redraw: Boolean(options.redraw) } satisfies AssignmentPayload,
+        payload: {
+          assignmentId: row.assignmentId,
+          redraw: Boolean(options.redraw),
+          reassigned: Boolean(options.reassigned),
+        } satisfies AssignmentPayload,
         dedupeKey: `assignment:${row.assignmentId}`,
       })),
     )
@@ -113,6 +118,26 @@ export async function enqueueAdminAlert(
         dedupeKey: `${dedupeKey}:${admin.id}`,
       })),
     )
+    .onConflictDoNothing({ target: notificationLog.dedupeKey });
+}
+
+/** Un DM de reveal a cada participante de una asignación vigente. */
+export async function enqueueRevealDms(tx: Transaction, eventId: string): Promise<void> {
+  const rows = await tx
+    .select({ giverUser: participants.userId, receiverId: assignments.receiverId })
+    .from(assignments)
+    .innerJoin(participants, eq(participants.id, assignments.giverId))
+    .where(and(eq(assignments.eventId, eventId), isNull(assignments.supersededBy)));
+  const receiverIds = rows.map((r) => r.receiverId);
+  const receivers =
+    receiverIds.length === 0
+      ? []
+      : await tx.select({ userId: participants.userId }).from(participants).where(inArray(participants.id, receiverIds));
+  const userIds = [...new Set([...rows.map((r) => r.giverUser), ...receivers.map((r) => r.userId)])];
+  if (userIds.length === 0) return;
+  await tx
+    .insert(notificationLog)
+    .values(userIds.map((userId) => ({ eventId, userId, kind: "reveal", dedupeKey: `reveal:${eventId}:${userId}` })))
     .onConflictDoNothing({ target: notificationLog.dedupeKey });
 }
 
@@ -215,7 +240,7 @@ async function render(tx: Transaction, row: NotificationRow, appBaseUrl: string)
   const eventName = event?.name ?? "Intercambio de anime";
 
   if (row.kind === "assignment") {
-    const { assignmentId, redraw } = row.payload as AssignmentPayload;
+    const { assignmentId, redraw, reassigned } = row.payload as AssignmentPayload;
     const [data] = await tx
       .select({ assignment: assignments, receiver: participants, receiverName: user.name })
       .from(assignments)
@@ -237,6 +262,7 @@ async function render(tx: Transaction, row: NotificationRow, appBaseUrl: string)
       deadline: proposalsPhase?.endsAt ?? null,
       link: myAssignment,
       redraw: Boolean(redraw),
+      reassigned: Boolean(reassigned),
     });
   }
 
@@ -245,6 +271,10 @@ async function render(tx: Transaction, row: NotificationRow, appBaseUrl: string)
     const [current] = await tx.select().from(eventPhases).where(eq(eventPhases.id, phaseId));
     if (!current || current.status !== "open") return null;
     return reminderMessage({ eventName, phase, deadline: current.endsAt, link: myAssignment });
+  }
+
+  if (row.kind === "reveal" && row.eventId && row.userId) {
+    return renderReveal(tx, row.eventId, row.userId, eventName, `${appBaseUrl}/reveal`);
   }
 
   if (row.kind === "admin_alert" && (row.payload as { type?: string }).type === "on_miss") {
@@ -269,6 +299,59 @@ async function render(tx: Transaction, row: NotificationRow, appBaseUrl: string)
   }
 
   return null;
+}
+
+async function renderReveal(
+  tx: Transaction,
+  eventId: string,
+  userId: string,
+  eventName: string,
+  link: string,
+): Promise<string | null> {
+  const [me] = await tx
+    .select({ id: participants.id })
+    .from(participants)
+    .where(and(eq(participants.eventId, eventId), eq(participants.userId, userId)));
+  if (!me) return null;
+
+  const active = and(eq(assignments.eventId, eventId), isNull(assignments.supersededBy));
+  const personOf = async (participantId: string) =>
+    (
+      await tx
+        .select({ name: user.name })
+        .from(participants)
+        .innerJoin(user, eq(user.id, participants.userId))
+        .where(eq(participants.id, participantId))
+    )[0]?.name ?? "alguien";
+  const chosenOf = async (assignmentId: string) =>
+    (
+      await tx
+        .select({ title: proposals.title })
+        .from(proposals)
+        .where(and(eq(proposals.assignmentId, assignmentId), eq(proposals.chosen, true)))
+    )[0]?.title ?? null;
+
+  const [asReceiver] = await tx.select().from(assignments).where(and(active, eq(assignments.receiverId, me.id)));
+  const [asGiver] = await tx.select().from(assignments).where(and(active, eq(assignments.giverId, me.id)));
+
+  let received = null;
+  if (asReceiver) {
+    const title = await chosenOf(asReceiver.id);
+    const [mine] = await tx.select({ id: evidence.id }).from(evidence).where(eq(evidence.assignmentId, asReceiver.id));
+    if (title) received = { title, giverName: await personOf(asReceiver.giverId), finished: Boolean(mine) };
+  }
+  let gave = null;
+  if (asGiver) {
+    const [review] = await tx.select({ rating: evidence.rating }).from(evidence).where(eq(evidence.assignmentId, asGiver.id));
+    gave = {
+      receiverName: await personOf(asGiver.receiverId),
+      title: await chosenOf(asGiver.id),
+      rating: review?.rating ? Number(review.rating) : null,
+      reviewed: Boolean(review),
+    };
+  }
+  if (!received && !gave) return null;
+  return revealMessage({ eventName, received, gave, link });
 }
 
 // ---------------------------------------------------------------------------

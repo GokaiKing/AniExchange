@@ -162,7 +162,7 @@ export async function updatePhasesAction(
 
 const flagsSchema = z.object({
   eventId: z.uuid(),
-  flag: z.enum(["paused", "archived", "feedPublic"]),
+  flag: z.enum(["paused", "archived", "feedPublic", "adminCanSeePairings"]),
   value: z.enum(["true", "false"]),
 });
 

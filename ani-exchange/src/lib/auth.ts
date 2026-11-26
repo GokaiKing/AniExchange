@@ -43,6 +43,15 @@ function createAuth() {
         }),
       },
     },
+    account: {
+      // Los tokens de Discord se guardan cifrados (AES con AUTH_SECRET). La app
+      // no los usa: solo `identify` al iniciar sesión.
+      encryptOAuthTokens: true,
+    },
+    verification: {
+      // El "state" del flujo OAuth se guarda hasheado.
+      storeIdentifier: "hashed",
+    },
     user: {
       additionalFields: {
         // input: false → ni el cliente ni el perfil OAuth pueden escribirlos;

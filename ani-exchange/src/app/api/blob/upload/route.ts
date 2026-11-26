@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/authz";
 import { getEnv } from "@/lib/env";
 import { MAX_UPLOAD_BYTES, UPLOAD_CONTENT_TYPES } from "@/lib/review-images";
 import { authorizeImageUpload } from "@/server/evidence";
+import { allowUserAction, RATE_LIMIT_MESSAGE } from "@/server/rate-limit";
 
 /**
  * Emite tokens para que el navegador suba imágenes de reviews directo a
@@ -17,6 +18,9 @@ export async function POST(request: Request): Promise<Response> {
 
   const user = await getSessionUser();
   if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  if (!(await allowUserAction(getDb(), user.id, "imageUpload"))) {
+    return Response.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+  }
 
   let body: HandleUploadBody;
   try {

@@ -4,6 +4,7 @@ import { getEnv } from "@/lib/env";
 import { isBlobConfigured, vercelBlobStore } from "@/server/blob-store";
 import { dmOptionsFromEnv } from "@/server/dm-config";
 import { cleanupOrphanImages } from "@/server/evidence";
+import { pruneRateLimits } from "@/server/rate-limit";
 import { runTick } from "@/server/tick";
 
 /**
@@ -20,7 +21,9 @@ async function handle(request: Request): Promise<Response> {
 
   // Una vez al día (07:xx UTC = 00:xx Hermosillo): borrar imágenes huérfanas.
   let orphanImagesDeleted: number | null = null;
-  if (isBlobConfigured() && new Date().getUTCHours() === 7) {
+  const daily = new Date().getUTCHours() === 7;
+  if (daily) await pruneRateLimits(db);
+  if (isBlobConfigured() && daily) {
     try {
       orphanImagesDeleted = await cleanupOrphanImages(db, vercelBlobStore());
     } catch {
