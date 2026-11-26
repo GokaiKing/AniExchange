@@ -56,7 +56,7 @@ export function assignmentMessage(input: AssignmentMessageInput): string {
 const REMINDER_TEXT: Partial<Record<PhaseKey, string>> = {
   proposals: "todavía no has propuesto animes para tu intercambio",
   selection: "ya tienes propuestas esperando: elige la que vas a ver",
-  evidence: "falta subir tu review del anime que viste",
+  evidence: "¿ya terminaste tu anime? Falta subir tu review",
 };
 
 export function hasReminderText(phase: PhaseKey): boolean {

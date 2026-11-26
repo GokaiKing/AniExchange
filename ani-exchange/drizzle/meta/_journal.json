@@ -57,6 +57,13 @@
       "when": 1795671317508,
       "tag": "0007_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795677417968,
+      "tag": "0008_merge_watching_into_evidence",
+      "breakpoints": true
     }
   ]
 }

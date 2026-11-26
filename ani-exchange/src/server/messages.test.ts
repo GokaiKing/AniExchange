@@ -43,7 +43,7 @@ describe("otros mensajes", () => {
     });
     expect(text).toContain("elige la que vas a ver");
     expect(() =>
-      reminderMessage({ eventName: "x", phase: "watching", deadline: new Date(), link: "" }),
+      reminderMessage({ eventName: "x", phase: "reveal", deadline: new Date(), link: "" }),
     ).toThrow();
   });
 

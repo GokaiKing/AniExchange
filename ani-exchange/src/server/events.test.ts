@@ -38,14 +38,14 @@ describe.skipIf(!hasTestDb)("events (integración con Postgres)", () => {
     }));
   }
 
-  it("crea una edición con sus 6 fases y la audita", async () => {
+  it("crea una edición con sus 5 fases y la audita", async () => {
     const event = await createEvent(db, actorId, {
       name: "Intercambio 2026",
       year: 2026,
       startDate: "2026-12-01",
     });
     const data = await getEventWithPhases(db, event.id);
-    expect(data!.phases).toHaveLength(6);
+    expect(data!.phases).toHaveLength(5);
     expect(data!.phases.every((p) => p.status === "pending")).toBe(true);
     // Guardado en UTC: fin de inscripción = 14 dic 23:59:59.999 Hermosillo
     expect(data!.phases[0].endsAt.toISOString()).toBe("2026-12-15T06:59:59.999Z");

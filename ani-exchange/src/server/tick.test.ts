@@ -161,7 +161,7 @@ describe.skipIf(!hasTestDb)("tick y sorteo (integración con Postgres)", () => {
   });
 
   it("salta fases deshabilitadas", async () => {
-    // registration: hoy-27 … hoy-14, proposals (deshabilitada), selection: hoy-6 … hoy-3, watching: hoy-2 …
+    // registration: hoy-27 … hoy-14, proposals (deshabilitada), selection: hoy-6 … hoy-3, evidence: hoy-2 …
     const event = await createEvent(db, null, { name: "E", year: 2026, startDate: addDays(today, -27) });
     await addParticipants(db, event.id, 3);
     await db
@@ -175,7 +175,7 @@ describe.skipIf(!hasTestDb)("tick y sorteo (integración con Postgres)", () => {
       registration: "closed",
       proposals: "pending",
       selection: "closed",
-      watching: "open",
+      evidence: "open",
     });
   });
 

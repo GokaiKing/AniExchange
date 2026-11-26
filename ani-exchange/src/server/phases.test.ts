@@ -22,7 +22,7 @@ function errorsOf(items: PhasePlanItem[], options?: Parameters<typeof validatePh
 }
 
 describe("defaultPhasePlan", () => {
-  it("genera las 6 fases consecutivas sin huecos ni traslapes", () => {
+  it("genera las 5 fases consecutivas sin huecos ni traslapes", () => {
     const items = plan();
     expect(items.map((item) => item.key)).toEqual(PHASE_ORDER);
     expect(toAppDate(items[0].startsAt)).toBe("2026-12-01");
@@ -49,11 +49,11 @@ describe("defaultPhasePlan", () => {
 });
 
 describe("validatePhasePlan", () => {
-  it("exige las 6 fases en orden", () => {
+  it("exige las 5 fases en orden", () => {
     const items = plan();
     [items[1], items[2]] = [items[2], items[1]];
     expect(errorsOf(items)[0].message).toMatch(/en orden/);
-    expect(errorsOf(plan().slice(0, 5))[0].message).toMatch(/en orden/);
+    expect(errorsOf(plan().slice(0, 4))[0].message).toMatch(/en orden/);
   });
 
   it("rechaza ends_at <= starts_at", () => {
@@ -85,7 +85,7 @@ describe("validatePhasePlan", () => {
   it("valida on_miss según la fase", () => {
     expect(errorsOf(edit(plan(), "proposals", { onMiss: "first_option" }))).toHaveLength(1);
     expect(errorsOf(edit(plan(), "selection", { onMiss: null }))).toHaveLength(1);
-    expect(errorsOf(edit(plan(), "watching", { onMiss: "mark_no_show" }))).toHaveLength(1);
+    expect(errorsOf(edit(plan(), "evidence", { onMiss: "mark_no_show" }))).toHaveLength(1);
     expect(errorsOf(edit(plan(), "proposals", { onMiss: "reassign" }))).toEqual([]);
   });
 

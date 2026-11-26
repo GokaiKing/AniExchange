@@ -1,11 +1,15 @@
 import type { PhaseKey, PhaseStatus } from "@/db/schema";
 import { addDays, dayEndUtc, dayStartUtc, type IsoDate } from "@/lib/dates";
 
+/**
+ * Orden de las fases. "watching" ya no se usa: ver la serie y subir la review
+ * son una sola fase ("evidence"), para que cada quien reseñe en cuanto termine.
+ * El valor sigue en el enum de Postgres solo por compatibilidad.
+ */
 export const PHASE_ORDER: readonly PhaseKey[] = [
   "registration",
   "proposals",
   "selection",
-  "watching",
   "evidence",
   "reveal",
 ];
@@ -14,8 +18,8 @@ export const PHASE_LABEL: Record<PhaseKey, string> = {
   registration: "Inscripción",
   proposals: "Propuestas",
   selection: "Elección",
-  watching: "A ver la serie",
-  evidence: "Evidencia",
+  watching: "A ver la serie (obsoleta)",
+  evidence: "Ver la serie y reseñar",
   reveal: "Reveal",
 };
 
@@ -45,8 +49,8 @@ export const DEFAULT_DURATION_DAYS: Record<PhaseKey, number> = {
   registration: 14,
   proposals: 7,
   selection: 4,
-  watching: 21,
-  evidence: 7,
+  watching: 0, // obsoleta
+  evidence: 28,
   reveal: 7,
 };
 
