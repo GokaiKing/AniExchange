@@ -1,8 +1,8 @@
 /** Validación de inscripción, compartida entre cliente y servidor (solo zod). */
 import { z } from "zod";
 
-export const MAX_BANNED_TAGS = 5;
-export const MAX_ALLOWED_TAGS = 3;
+export const MAX_BANNED_TAGS = 3;
+export const MAX_ALLOWED_TAGS = 5;
 /**
  * Límite de episodios por cours (decisión del admin, nov 2026). Es un tope:
  * "2 cours" también acepta series de 1 cour. `null` = indefinido.

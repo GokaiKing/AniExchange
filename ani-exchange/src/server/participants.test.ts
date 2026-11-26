@@ -47,8 +47,9 @@ describe("registrationSchema", () => {
     expect(bad({ maxEpisodes: undefined as never })).toBe(false);
     expect(bad({ maxEpisodes: null })).toBe(true); // indefinido
     expect(bad({ maxEpisodes: 13 })).toBe(true);
-    expect(bad({ bannedTags: ["a", "b", "c", "d", "e", "f"] })).toBe(false);
-    expect(bad({ allowedTags: ["a", "b", "c", "d"] })).toBe(false);
+    expect(bad({ bannedTags: ["a", "b", "c", "d"] })).toBe(false); // máx. 3 baneados
+    expect(bad({ allowedTags: ["a", "b", "c", "d", "e", "f"] })).toBe(false); // máx. 5 permitidos
+    expect(bad({ bannedTags: ["a", "b", "c"], allowedTags: ["d", "e", "f", "g", "h"] })).toBe(true);
     expect(bad({ bannedTags: ["Action"], allowedTags: ["Action"] })).toBe(false);
     expect(bad({ bannedTags: ["Horror", "Horror"] })).toBe(false);
   });

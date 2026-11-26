@@ -187,8 +187,8 @@ export const participants = pgTable(
   (t) => [
     unique("participants_event_user_unique").on(t.eventId, t.userId),
     check("participants_max_episodes_positive", sql`${t.maxEpisodes} > 0`),
-    check("participants_banned_tags_max", sql`cardinality(${t.bannedTags}) <= 5`),
-    check("participants_allowed_tags_max", sql`cardinality(${t.allowedTags}) <= 3`),
+    check("participants_banned_tags_max", sql`cardinality(${t.bannedTags}) <= 3`),
+    check("participants_allowed_tags_max", sql`cardinality(${t.allowedTags}) <= 5`),
   ],
 );
 
