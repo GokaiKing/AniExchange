@@ -12,6 +12,9 @@ import { runTick } from "@/server/tick";
  * `Authorization: Bearer $CRON_SECRET`. GET para Vercel Cron, POST para
  * cron-job.org u otros. Avanza fases, encola recordatorios y envía un lote de DMs.
  */
+/** Lote de DMs (~1 s entre mensajes) + posibles consultas a AniList al cerrar fases. */
+export const maxDuration = 60;
+
 async function handle(request: Request): Promise<Response> {
   if (!isCronAuthorized(request.headers.get("authorization"), getEnv().CRON_SECRET)) {
     return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });

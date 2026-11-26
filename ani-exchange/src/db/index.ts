@@ -6,7 +6,9 @@ import * as schema from "./schema";
 type Db = ReturnType<typeof createDb>;
 
 function createDb(url: string) {
-  const client = postgres(url, { max: 5 });
+  // prepare: false → compatible con el pooler de Neon (PgBouncer en modo
+  // transacción), que no soporta prepared statements.
+  const client = postgres(url, { max: 5, prepare: false });
   return drizzle(client, { schema });
 }
 
