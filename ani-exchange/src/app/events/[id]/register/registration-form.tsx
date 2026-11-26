@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ export function RegistrationForm({ eventId, tagOptions, initial, isActive }: Pro
   const [state, setState] = useState<RegistrationState>({});
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
 
   const submit = () =>
     startTransition(async () => {
@@ -60,7 +62,13 @@ export function RegistrationForm({ eventId, tagOptions, initial, isActive }: Pro
       });
       setState(result);
       if (result.ok) {
-        toast.success(isActive ? "Inscripción actualizada" : `¡Inscrito como ${result.profileUsername}!`);
+        if (isActive) {
+          toast.success("Inscripción actualizada");
+        } else {
+          // Primera inscripción: de vuelta al home, donde se ve "Estás inscrito ✓".
+          toast.success(`¡Inscrito como ${result.profileUsername}!`);
+          router.push("/");
+        }
       }
     });
 
